@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Billionaire Deriv Analysis Tools | AI Live Signals</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #03070e;
+      color: #eef5ff;
+      font-family: 'Rajdhani', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* Animated BG */
+    .bg-gradient {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 20% 30%, rgba(0, 229, 255, 0.08), rgba(0, 0, 0, 0.95));
+      z-index: 0;
+    }
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(0, 255, 255, 0.02) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(0, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+      animation: slowMove 20s linear infinite;
+    }
+    @keyframes slowMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 40px 40px; }
+    }
+    .glow-pulse {
+      position: fixed;
+      top: 30%;
+      left: 30%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(ellipse, rgba(0,229,255,0.05), transparent);
+      border-radius: 50%;
+      filter: blur(60px);
+      animation: pulseGlow 6s alternate infinite;
+      z-index: 0;
+    }
+    @keyframes pulseGlow {
+      0% { opacity: 0.3; transform: scale(1); }
+      100% { opacity: 0.7; transform: scale(1.3); }
+    }
+
+    /* Container */
+    .app-wrapper {
+      position: relative;
+      z-index: 2;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* PASSWORD GATE */
+    .password-gate {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #01020ae6;
+      backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      transition: 0.3s;
+    }
+    .gate-card {
+      background: #0b1120dd;
+      border: 1px solid #2b4a7a;
+      border-radius: 48px;
+      padding: 45px 35px;
+      width: 92%;
+      max-width: 460px;
+      text-align: center;
+      box-shadow: 0 30px 50px rgba(0,0,0,0.5), 0 0 30px rgba(0,229,255,0.2);
+      backdrop-filter: blur(4px);
+    }
+    .gate-card h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 42px;
+      background: linear-gradient(135deg, #fff, #00e5ff, #ffd60a);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 16px;
+    }
+    .gate-card input {
+      width: 100%;
+      background: #03070e;
+      border: 1px solid #3a6a9a;
+      padding: 15px;
+      border-radius: 60px;
+      color: white;
+      font-size: 18px;
+      text-align: center;
+      margin: 20px 0;
+      font-family: monospace;
+    }
+    .gate-card button {
+      background: linear-gradient(90deg, #0066ff, #00e5ff);
+      border: none;
+      width: 100%;
+      padding: 14px;
+      border-radius: 60px;
+      font-weight: bold;
+      font-size: 18px;
+      cursor: pointer;
+      color: #03070e;
+      margin-top: 6px;
+    }
+    .wa-gate-btn {
+      background: #25D366;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .error-msg {
+      color: #ff6a7c;
+      margin-top: 12px;
+    }
+    /* MAIN DASHBOARD */
+    .main-dash {
+      display: none;
+      animation: fadeSlideUp 0.5s ease;
+    }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Header */
+    .brand {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .brand h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(44px, 10vw, 88px);
+      letter-spacing: 4px;
+      background: linear-gradient(135deg, #fff, #00e5ff, #f0b90b);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 15px rgba(0,229,255,0.3);
+      animation: titleGlow 3s infinite alternate;
+    }
+    @keyframes titleGlow {
+      0% { text-shadow: 0 0 5px cyan; }
+      100% { text-shadow: 0 0 25px cyan; }
+    }
+    .badge-line {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin: 10px 0 20px;
+    }
+    .badge-pill {
+      background: rgba(0, 229, 255, 0.1);
+      border: 1px solid #1f4a7a;
+      border-radius: 60px;
+      padding: 6px 18px;
+      font-family: monospace;
+      font-size: 12px;
+      backdrop-filter: blur(4px);
+    }
+    /* Volatility grid */
+    .volatility-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      margin: 25px 0;
+    }
+    .vol-card {
+      background: #0a1122cc;
+      border: 1px solid #2a4a70;
+      border-radius: 30px;
+      padding: 8px 18px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 600;
+      font-size: 14px;
+      backdrop-filter: blur(2px);
+    }
+    .vol-card.active {
+      background: linear-gradient(145deg, #00e5ff20, #0066ff30);
+      border-color: #00e5ff;
+      box-shadow: 0 0 12px cyan;
+      color: #00e5ff;
+    }
+    .vol-card:hover {
+      transform: translateY(-3px);
+      border-color: cyan;
+    }
+    /* Controls row */
+    .controls-row {
+      background: #0b1120aa;
+      backdrop-filter: blur(12px);
+      border-radius: 60px;
+      padding: 12px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      border: 1px solid #2a5070;
+    }
+    .tick-slider {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    .btn-stop {
+      background: #ff3860;
+      border: none;
+      padding: 8px 24px;
+      border-radius: 40px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    /* Signal cards grid */
+    .signals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 24px;
+      margin: 30px 0;
+    }
+    .signal-card {
+      background: #0c1428cc;
+      backdrop-filter: blur(8px);
+      border: 1px solid #2a4a70;
+      border-radius: 36px;
+      padding: 22px;
+      transition: 0.2s;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .signal-card h3 {
+      display: flex;
+      justify-content: space-between;
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+    .main-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 52px;
+      line-height: 1;
+      margin: 10px 0;
+    }
+    .confidence-bar {
+      height: 6px;
+      background: #1e2a48;
+      border-radius: 6px;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .fill-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00e5ff, #00e676);
+    }
+    /* Frequency chart */
+    .freq-container {
+      background: #0a1024cc;
+      border-radius: 28px;
+      padding: 20px;
+      margin: 20px 0;
+      border: 1px solid #2a4970;
+    }
+    .freq-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      justify-content: space-between;
+      margin: 20px 0;
+      height: 180px;
+    }
+    .bar-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .bar {
+      width: 100%;
+      background: linear-gradient(0deg, #00e5ff, #0088ff);
+      border-radius: 12px 12px 4px 4px;
+      transition: height 0.3s ease;
+      min-height: 2px;
+    }
+    .digit-label {
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .last-digit-block {
+      text-align: center;
+      font-size: 48px;
+      font-family: monospace;
+      font-weight: bold;
+      background: #03070e;
+      border-radius: 50px;
+      padding: 8px 20px;
+      display: inline-block;
+      margin-top: 12px;
+    }
+    .mini-chart {
+      background: #03070e;
+      border-radius: 24px;
+      padding: 10px;
+      margin-top: 20px;
+    }
+    canvas {
+      width: 100%;
+      height: 100px;
+      background: #050c16;
+      border-radius: 20px;
+    }
+    .live-badge {
+      background: #00e67620;
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-size: 11px;
+      border: 1px solid #00e676;
+    }
+    footer {
+      text-align: center;
+      margin-top: 50px;
+      padding: 20px;
+      border-top: 1px solid #1f3a5a;
+      font-size: 11px;
+    }
+    @media (max-width: 680px) {
+      .volatility-grid { gap: 8px; }
+      .vol-card { font-size: 11px; padding: 6px 12px; }
+    }
+  </style>
+</head>
+<body>
+<div class="bg-gradient"></div>
+<div class="grid-overlay"></div>
+<div class="glow-pulse"></div>
+
+<!-- Password Gate -->
+<div id="passwordGate" class="password-gate">
+  <div class="gate-card">
+    <h2>💎 BILLIONARE DERIV ANALYSIS TOOLS</h2>
+    <p style="color:#aac8ff;">Enter your login credentials to access the analysis tool</p>
+    <input type="password" id="passInput" placeholder="Password" autocomplete="off">
+    <button id="unlockBtn">🔓 UNLOCK TOOL →</button>
+    <button id="gateWaBtn" class="wa-gate-btn">📲 GET LOGINS CREDENTIALS</button>
+    <div id="passError" class="error-msg"></div>
+  </div>
+</div>
+
+<!-- Main Dashboard -->
+<div id="mainDashboard" class="main-dash">
+  <div class="app-wrapper">
+    <div class="brand">
+      <h1>BILLIONARE DERIV ANALYSIS TOOLS</h1>
+      <div class="badge-line">
+        <span class="badge-pill">⚡ REAL-TIME DERIV DATA</span>
+        <span class="badge-pill">🧠 AI PRECISION SIGNALS</span>
+        <span class="badge-pill">📊 50–1000 TICKS</span>
+      </div>
+    </div>
+
+    <!-- Volatility Selection (all indices 1s) -->
+    <div class="volatility-grid" id="volatilityGrid">
+      <!-- filled with JS -->
+    </div>
+
+    <!-- Control Bar -->
+    <div class="controls-row">
+      <div class="tick-slider">
+        <span>📈 Tick Window:</span>
+        <input type="range" id="tickRange" min="50" max="1000" step="10" value="200">
+        <span id="tickVal">200 ticks</span>
+      </div>
+      <button id="stopAnalysisBtn" class="btn-stop">⏹️ Stop Analysis</button>
+      <button id="startAnalysisBtn" style="background:#00e5ff; border:none; border-radius:40px; padding:8px 24px;">▶️ Start / Reconnect</button>
+      <span id="connStatus" class="live-badge">● CONNECTING</span>
+    </div>
+
+    <!-- Signal Cards Grid -->
+    <div class="signals-grid" id="signalsGrid">
+      <!-- dynamic -->
+    </div>
+
+    <!-- Frequency Distribution & Chart -->
+    <div class="freq-container">
+      <h3>📊 Frequency Distribution (live digits)</h3>
+      <div class="freq-bars" id="freqBars"></div>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap;">
+        <div>🎯 Last Digit: <span id="lastDigitSpan" class="last-digit-block">-</span></div>
+        <div>📈 Even/Odd ratio: <span id="evenOddRatio">0%</span> Even</div>
+        <div>⏱️ Total ticks: <span id="totalTicksCount">0</span></div>
+      </div>
+    </div>
+
+    <!-- Mini price chart (live) -->
+    <div class="mini-chart">
+      <canvas id="priceCanvas" width="800" height="100" style="width:100%; height:100px"></canvas>
+    </div>
+
+    <footer>
+      🔌 Deriv WebSocket API (app_id:105240) • Real tick analysis • Support WhatsApp: +254781358237<br>
+      Trade responsibly. Signals based on real-time AI confluence.
+    </footer>
+  </div>
+</div>
+
+<script>
+  // ---------- PASSWORD PROTECTION ----------
+  const ADMIN_PASS = "37757441Fe@";
+  const passGate = document.getElementById('passwordGate');
+  const mainDash = document.getElementById('mainDashboard');
+  const unlockBtn = document.getElementById('unlockBtn');
+  const passInput = document.getElementById('passInput');
+  const passErrorSpan = document.getElementById('passError');
+  const gateWaBtn = document.getElementById('gateWaBtn');
+
+  function openWhatsappGate() {
+    window.open('https://wa.me/254781358237?text=Hello%20I%20need%20my%20login%20credentials%20for%20BILLIONARE%20DERIV%20ANALYSIS%20TOOLS', '_blank');
+  }
+  gateWaBtn.onclick = openWhatsappGate;
+
+  function unlockApp() {
+    if (passInput.value === ADMIN_PASS) {
+      passGate.style.display = 'none';
+      mainDash.style.display = 'block';
+      initTradingPlatform();
+    } else {
+      passErrorSpan.innerText = '❌ Invalid credentials. Use "GET LOGINS CREDENTIALS" if needed.';
+      passInput.value = '';
+    }
+  }
+  unlockBtn.onclick = unlockApp;
+  passInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') unlockApp(); });
+
+  // ---------- DERIV REAL WEBSOCKET (app_id:105240) ----------
+  const WS_URL = "wss://ws.binaryws.com/websockets/v3?app_id=105240";
+  let ws = null;
+  let activeSymbol = "R_75";     // default Volatility 75 (1s)
+  let tickHistory = [];           // store {price, digit, epoch, rawChange}
+  let digitCounts = Array(10).fill(0);
+  let priceHistory = [];          // for chart & RSI
+  let lastPrice = null;
+  let isManualStop = false;
+  let animationFrame = null;
+  let canvasCtx = null;
+  let priceCanvas = null;
+
+  // DOM elements
+  const volatilityGrid = document.getElementById('volatilityGrid');
+  const tickRange = document.getElementById('tickRange');
+  const tickVal = document.getElementById('tickVal');
+  const stopBtn = document.getElementById('stopAnalysisBtn');
+  const startBtn = document.getElementById('startAnalysisBtn');
+  const connStatusSpan = document.getElementById('connStatus');
+  const signalsGridDiv = document.getElementById('signalsGrid');
+  const freqBarsDiv = document.getElementById('freqBars');
+  const lastDigitSpan = document.getElementById('lastDigitSpan');
+  const evenOddRatioSpan = document.getElementById('evenOddRatio');
+  const totalTicksSpan = document.getElementById('totalTicksCount');
+
+  // Available Volatility 1s Indices (matching Deriv)
+  const volatilityList = [
+    { name: "Volatility 10 (1s)", symbol: "R_10" },
+    { name: "Volatility 15 (1s)", symbol: "R_15" },
+    { name: "Volatility 25 (1s)", symbol: "R_25" },
+    { name: "Volatility 30 (1s)", symbol: "R_30" },
+    { name: "Volatility 50 (1s)", symbol: "R_50" },
+    { name: "Volatility 75 (1s)", symbol: "R_75" },
+    { name: "Volatility 90 (1s)", symbol: "R_90" },
+    { name: "Volatility 100 (1s)", symbol: "R_100" }
+  ];
+
+  let currentTickWindow = 200;   // slider value
+
+  function renderVolatilityButtons() {
+    volatilityGrid.innerHTML = '';
+    volatilityList.forEach(v => {
+      const btn = document.createElement('div');
+      btn.className = `vol-card ${activeSymbol === v.symbol ? 'active' : ''}`;
+      btn.innerText = v.name;
+      btn.onclick = () => {
+        if (activeSymbol === v.symbol) return;
+        activeSymbol = v.symbol;
+        renderVolatilityButtons();
+        reconnectWebsocket();
+      };
+      volatilityGrid.appendChild(btn);
+    });
+  }
+
+  // Utility: compute RSI (14)
+  function computeRSI(prices) {
+    if (prices.length < 15) return 50;
+    let gains = 0, losses = 0;
+    for (let i = prices.length-15; i < prices.length-1; i++) {
+      let diff = prices[i+1] - prices[i];
+      if (diff >= 0) gains += diff;
+      else losses -= diff;
+    }
+    let avgGain = gains / 14;
+    let avgLoss = losses / 14;
+    if (avgLoss === 0) return 100;
+    let rs = avgGain / avgLoss;
+    let rsi = 100 - (100/(1+rs));
+    return Math.min(100, Math.max(0, rsi));
+  }
+
+  // Advanced signal analysis (Rise/Fall, Over/Under, Even/Odd, Matches/Differs)
+  function analyzeComprehensiveSignals(recentTicks) {
+    if (recentTicks.length < 10) return { riseFall: "WAIT", overUnder: "WAIT", evenOdd: "WAIT", matchesDiffers: "WAIT", confidence: 35, rsi: 50 };
+    const digits = recentTicks.map(t => t.digit);
+    const changes = recentTicks.map(t => t.rawChange);
+    const avgChange = changes.reduce((a,b)=>a+b,0)/changes.length;
+    const rsi = computeRSI(priceHistory);
+    let riseFall = "NEUTRAL";
+    if (rsi < 32) riseFall = "RISE";
+    else if (rsi > 68) riseFall = "FALL";
+    else if (avgChange > 0.12) riseFall = "RISE";
+    else if (avgChange < -0.12) riseFall = "FALL";
+    else riseFall = (avgChange > 0 ? "RISE" : "FALL");
+    
+    const overRatio = digits.filter(d => d >= 5).length / digits.length;
+    let overUnder = overRatio > 0.55 ? "OVER 5" : (overRatio < 0.45 ? "UNDER 5" : (recentTicks[recentTicks.length-1].digit >=5 ? "OVER 5" : "UNDER 5"));
+    
+    const evenRatio = digits.filter(d => d%2===0).length / digits.length;
+    let evenOdd = evenRatio > 0.55 ? "EVEN" : (evenRatio < 0.45 ? "ODD" : (recentTicks[recentTicks.length-1].digit%2===0 ? "EVEN" : "ODD"));
+    
+    // Matches/Differs (compare last two digits)
+    let matchesDiffers = "NEUTRAL";
+    if (recentTicks.length >= 2) {
+      const last = recentTicks[recentTicks.length-1].digit;
+      const prev = recentTicks[recentTicks.length-2].digit;
+      matchesDiffers = (last === prev) ? "MATCHES" : "DIFFERS";
+    }
+    
+    let confidence = 55;
+    if ((riseFall === "RISE" && rsi < 40) || (riseFall === "FALL" && rsi > 60)) confidence += 12;
+    if ((evenOdd === "EVEN" && evenRatio > 0.55) || (evenOdd === "ODD" && evenRatio < 0.45)) confidence += 10;
+    if ((overUnder === "OVER 5" && overRatio > 0.55) || (overUnder === "UNDER 5" && overRatio < 0.45)) confidence += 10;
+    confidence = Math.min(94, Math.max(42, confidence));
+    return { riseFall, overUnder, evenOdd, matchesDiffers, confidence, rsi: rsi.toFixed(1) };
+  }
+  
+  function updateUI() {
+    if (tickHistory.length === 0) {
+      signalsGridDiv.innerHTML = '<div class="signal-card">⏳ Waiting for live ticks...</div>';
+      return;
+    }
+    const windowSize = Math.min(currentTickWindow, tickHistory.length);
+    const recent = tickHistory.slice(-windowSize);
+    const signals = analyzeComprehensiveSignals(recent);
+    const lastTick = tickHistory[tickHistory.length-1];
+    const digitsFreq = digitCounts;
+    const total = tickHistory.length;
+    const evenCount = tickHistory.filter(t => t.digit % 2 === 0).length;
+    const evenPercent = total ? ((evenCount/total)*100).toFixed(1) : 0;
+    evenOddRatioSpan.innerText = `${evenPercent}% Even`;
+    totalTicksSpan.innerText = total;
+    lastDigitSpan.innerText = lastTick.digit;
+    
+    // Signal cards HTML
+    signalsGridDiv.innerHTML = `
+      <div class="signal-card">
+        <h3>📈 RISE / FALL <span class="live-badge">CONFLUENCE</span></h3>
+        <div class="main-value" style="color: ${signals.riseFall === 'RISE' ? '#00e676' : (signals.riseFall === 'FALL' ? '#ff5a7a' : '#ffd966')}">${signals.riseFall}</div>
+        <div class="confidence-bar"><div class="fill-bar" style="width: ${signals.confidence}%;"></div></div>
+        <div>Confidence: ${signals.confidence}% • RSI(14): ${signals.rsi}</div>
+        <div>Trend momentum: ${lastTick.rawChange > 0 ? '▲ bullish' : '▼ bearish'}</div>
+      </div>
+      <div class="signal-card">
+        <h3>🎯 OVER / UNDER <span class="live-badge">DIGIT 5+</span></h3>
+        <div class="main-value" style="color:#c792ff">${signals.overUnder}</div>
+        <div>Probability: ${signals.overUnder === 'OVER 5' ? '⬆️ above 5' : '⬇️ below 5'}</div>
+        <div>Over ratio: ${(tickHistory.filter(t=>t.digit>=5).length/tickHistory.length*100).toFixed(1)}%</div>
+      </div>
+      <div class="signal-card">
+        <h3>🟢 EVEN / ODD &nbsp;&nbsp;|&nbsp;🔁 MATCHES/DIFFERS</h3>
+        <div><span style="font-size: 32px; font-family:'Bebas Neue';">${signals.evenOdd}</span> &nbsp; | &nbsp; <span style="font-size: 24px;">${signals.matchesDiffers}</span></div>
+        <div>Even/Odd ratio: ${evenPercent}% Even</div>
+        <div>Last two digits: ${tickHistory.length>=2 ? tickHistory[tickHistory.length-2].digit + ' → ' + lastTick.digit : '--'}</div>
+        <div class="confidence-bar"><div class="fill-bar" style="width: ${signals.confidence}%; background:#ffd966;"></div></div>
+      </div>
+      <div class="signal-card">
+        <h3>🤖 AI NEXT DIGIT PREDICTION</h3>
+        <div class="main-value" style="font-size: 44px; color: #66e0ff;">${predictNextDigit(recent.map(t=>t.digit))}</div>
+        <div>Based on last ${recent.length} ticks • weighted frequency</div>
+        <div>Last 5 digits: ${recent.slice(-5).map(d=>d).join(' → ')}</div>
+      </div>
+    `;
+
+    // Frequency bars
+    const maxCount = Math.max(...digitCounts, 1);
+    freqBarsDiv.innerHTML = '';
+    for (let i=0; i<10; i++) {
+      const height = (digitCounts[i] / maxCount) * 140;
+      const barDiv = document.createElement('div');
+      barDiv.className = 'bar-item';
+      barDiv.innerHTML = `<div class="bar" style="height: ${height}px;"></div><div class="digit-label">${i}</div><div style="font-size:11px;">${digitCounts[i]}</div>`;
+      freqBarsDiv.appendChild(barDiv);
+    }
+    // update chart (price line)
+    drawPriceChart();
+  }
+
+  function predictNextDigit(digits) {
+    if (digits.length < 20) return "~4-6";
+    const freq = [0,0,0,0,0,0,0,0,0,0];
+    digits.slice(-40).forEach(d => freq[d]++);
+    let best = 4, maxF = 0;
+    for(let i=0;i<10;i++) if(freq[i] > maxF) { maxF = freq[i]; best = i; }
+    if(maxF >= 3) return best;
+    const avg = digits.reduce((a,b)=>a+b,0)/digits.length;
+    return Math.floor(avg % 10);
+  }
+
+  function drawPriceChart() {
+    if (!priceCanvas) {
+      priceCanvas = document.getElementById('priceCanvas');
+      if(priceCanvas) canvasCtx = priceCanvas.getContext('2d');
+    }
+    if(!canvasCtx || priceHistory.length < 2) return;
+    const w = priceCanvas.clientWidth;
+    const h = 100;
+    priceCanvas.width = w;
+    priceCanvas.height = h;
+    canvasCtx.clearRect(0,0,w,h);
+    const prices = priceHistory.slice(-80);
+    if(prices.length < 2) return;
+    const minP = Math.min(...prices);
+    const maxP = Math.max(...prices);
+    const range = maxP - minP || 1;
+    canvasCtx.beginPath();
+    canvasCtx.strokeStyle = '#00e5ff';
+    canvasCtx.lineWidth = 2;
+    for(let i=0; i<prices.length; i++) {
+      const x = (i / (prices.length-1)) * w;
+      const y = h - ((prices[i] - minP) / range) * (h-10) - 5;
+      if(i===0) canvasCtx.moveTo(x, y);
+      else canvasCtx.lineTo(x, y);
+    }
+    canvasCtx.stroke();
+  }
+
+  function processTick(tickData) {
+    if (!tickData?.tick) return;
+    const price = tickData.tick.quote;
+    const epoch = tickData.tick.epoch;
+    if (!price) return;
+    const digit = Math.floor(price) % 10;
+    let rawChange = 0;
+    if (lastPrice !== null) rawChange = price - lastPrice;
+    lastPrice = price;
+    const tickObj = { price, digit, epoch, rawChange };
+    tickHistory.push(tickObj);
+    if (tickHistory.length > 2000) {
+      const removed = tickHistory.shift();
+      digitCounts[removed.digit]--;
+    }
+    digitCounts[digit]++;
+    priceHistory.push(price);
+    if (priceHistory.length > 300) priceHistory.shift();
+    updateUI();
+  }
+
+  function reconnectWebsocket() {
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+      ws.close();
+    }
+    isManualStop = false;
+    connectWebSocket();
+  }
+
+  function connectWebSocket() {
+    if (isManualStop) return;
+    connStatusSpan.innerText = "● CONNECTING...";
+    ws = new WebSocket(WS_URL);
+    ws.onopen = () => {
+      const subscribeMsg = JSON.stringify({ ticks: activeSymbol, subscribe: 1 });
+      ws.send(subscribeMsg);
+      connStatusSpan.innerText = "● LIVE (REAL DATA)";
+      connStatusSpan.style.background = "#00e67630";
+      // Reset data on symbol change? Keep history but reset if needed? We'll flush to avoid confusion.
+      tickHistory = [];
+      digitCounts = Array(10).fill(0);
+      priceHistory = [];
+      lastPrice = null;
+    };
+    ws.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        if (data.error) { console.warn(data.error); connStatusSpan.innerText = "⚠️ API error"; return; }
+        if (data.tick) processTick(data);
+      } catch(err) {}
+    };
+    ws.onerror = () => { connStatusSpan.innerText = "⚠️ CONN ERROR"; };
+    ws.onclose = () => {
+      if (!isManualStop && mainDash.style.display === 'block') {
+        connStatusSpan.innerText = "● RECONNECTING...";
+        setTimeout(() => connectWebSocket(), 3000);
+      } else if (!isManualStop) {
+        connStatusSpan.innerText = "● DISCONNECTED";
+      }
+    };
+  }
+
+  function stopAnalysis() {
+    isManualStop = true;
+    if (ws) ws.close();
+    connStatusSpan.innerText = "● STOPPED";
+  }
+  function startAnalysis() {
+    if (isManualStop) {
+      isManualStop = false;
+      connectWebSocket();
+    } else if (!ws || ws.readyState !== WebSocket.OPEN) {
+      connectWebSocket();
+    }
+  }
+
+  // tick window slider
+  tickRange.addEventListener('input', (e) => {
+    currentTickWindow = parseInt(e.target.value);
+    tickVal.innerText = currentTickWindow + ' ticks';
+    updateUI();
+  });
+  stopBtn.onclick = stopAnalysis;
+  startBtn.onclick = startAnalysis;
+
+  function initTradingPlatform() {
+    renderVolatilityButtons();
+    currentTickWindow = parseInt(tickRange.value);
+    tickVal.innerText = currentTickWindow + ' ticks';
+    connectWebSocket();
+    // set interval UI refresh (already called on each tick)
+    setInterval(() => {
+      if (mainDash.style.display === 'block' && tickHistory.length) updateUI();
+    }, 800);
+    // canvas resize handler
+    window.addEventListener('resize', () => drawPriceChart());
+  }
+</script>
+</body>
+</html>
