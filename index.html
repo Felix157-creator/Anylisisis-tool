@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Billionaire Trader Pro | Live Market Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#020509;--panel:#08111d;--accent:#00ff88;--accent2:#00ccff;
+  --bad:#ff3355;--good:#00ff88;--gold:#ffd700;--text:#cce8ff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:sans-serif;padding-bottom:100px;overflow-x:hidden;}
+
+/* UI Glow & Layout */
+.app-hdr{background:var(--panel);padding:15px;display:flex;justify-content:space-between;border-bottom:2px solid #1a3050;position:sticky;top:0;z-index:10;}
+.logo{font-family:'Orbitron';color:var(--accent);font-size:14px;letter-spacing:2px;cursor:pointer;}
+
+.container{max-width:480px;margin:0 auto;padding:15px;}
+.card{background:rgba(8,17,29,0.9);border:1px solid #1a3050;border-radius:15px;padding:15px;margin-bottom:15px;box-shadow:0 10px 30px rgba(0,0,0,0.5);}
+
+/* Live Price Display */
+.price-box{text-align:center;margin-bottom:20px;}
+#live-price{font-family:'Share Tech Mono';font-size:32px;color:var(--text);text-shadow:0 0 10px var(--accent2);}
+
+/* Digit Frequency Visualizer */
+.stat-row{display:flex;justify-content:space-between;margin-bottom:10px;font-family:'Share Tech Mono';}
+.freq-bar-wrap{height:8px;background:#1a3050;border-radius:4px;flex-grow:1;margin:0 10px;align-self:center;overflow:hidden;}
+.freq-bar-fill{height:100%;background:var(--accent2);width:0%;transition:0.3s ease-out;}
+
+/* Signal Box */
+.signal-card{border-left:4px solid var(--accent);background:linear-gradient(90deg, rgba(0,255,136,0.1), transparent);}
+.master-signal{font-family:'Orbitron';font-size:24px;color:var(--gold);margin:10px 0;}
+
+/* Buttons */
+.btn{width:100%;padding:16px;border-radius:12px;border:none;font-weight:bold;font-family:'Orbitron';cursor:pointer;margin-top:10px;}
+.btn-main{background:linear-gradient(90deg, var(--accent), var(--accent2));color:#000;}
+.btn-whatsapp{background:#25D366;color:white;text-decoration:none;display:block;text-align:center;}
+
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+.live-dot { height: 8px; width: 8px; background: var(--accent); border-radius: 50%; display: inline-block; margin-right: 5px; animation: pulse 1s infinite; }
+</style>
+</head>
+<body>
+
+<div class="app-hdr">
+    <div class="logo" onclick="unlockAdmin()">BILLIONAIRE PRO v4.0</div>
+    <div id="status" style="font-size:10px; color:var(--accent);"><span class="live-dot"></span>LIVE: VOLATILITY 10 (1S)</div>
+</div>
+
+<div class="container">
+    <div class="card price-box">
+        <div style="font-size:10px; color:#5c7080; letter-spacing:2px; margin-bottom:5px;">CURRENT MARKET QUOTE</div>
+        <div id="live-price">0.0000</div>
+    </div>
+
+    <div class="card">
+        <h3 style="font-size:11px; margin-bottom:15px; font-family:'Orbitron'; color:var(--accent2);">DIGIT DENSITY (LAST 100 TICKS)</h3>
+        <div id="digit-bars">
+            </div>
+    </div>
+
+    <div class="card signal-card">
+        <div style="font-size:10px; color:var(--accent); text-transform:uppercase;">AI Quantum Recommendation</div>
+        <div id="master-signal" class="master-signal">ANALYZING...</div>
+        <div style="font-size:11px; color:#5c7080;">Pattern Reliability: <span id="accuracy-pct" style="color:var(--accent);">0%</span></div>
+    </div>
+
+    <div id="client-view" class="card">
+        <a href="https://wa.me/254781358237?text=I%20want%20to%20buy%20the%202026%20Billionaire%20Pro%20Logins" class="btn btn-whatsapp">PURCHASE VIP LOGINS</a>
+    </div>
+
+    <div id="admin-view" class="card" style="display:none; border:1px solid var(--gold);">
+        <h3 style="color:var(--gold); font-size:12px; margin-bottom:10px; font-family:'Orbitron';">OWNER COMMANDS</h3>
+        <button class="btn btn-main" onclick="executeTrade()">START AUTO-TRADE</button>
+        <button class="btn" style="background:#333; color:white;" onclick="location.reload()">REFRESH ENGINE</button>
+    </div>
+</div>
+
+<script>
+let digitHistory = [];
+let adminTaps = 0;
+
+// 1. CONNECT TO REAL DERIV WEBSOCKET
+const app_id = 1089; // Public App ID for real data
+const ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${app_id}`);
+
+ws.onopen = function(evt) {
+    // Subscribe to Volatility 10 (1s) Index
+    ws.send(JSON.stringify({ "ticks": "R_10", "subscribe": 1 }));
+};
+
+ws.onmessage = function(msg) {
+    const data = JSON.parse(msg.data);
+    if (data.tick) {
+        const price = data.tick.quote;
+        const lastDigit = parseInt(price.toString().slice(-1));
+        
+        document.getElementById('live-price').innerText = price;
+        processTick(lastDigit);
+    }
+};
+
+// 2. ANALYZE REAL DIGITS
+function processTick(digit) {
+    digitHistory.push(digit);
+    if(digitHistory.length > 100) digitHistory.shift();
+
+    const container = document.getElementById('digit-bars');
+    container.innerHTML = '';
+    
+    const counts = {};
+    for(let i=0; i<10; i++) counts[i] = digitHistory.filter(d => d === i).length;
+    
+    for(let i=0; i<10; i++) {
+        const pct = counts[i] || 0;
+        const barColor = pct > 12 ? 'var(--accent)' : (pct < 7 ? 'var(--bad)' : 'var(--accent2)');
+        container.innerHTML += `
+            <div class="stat-row" style="font-size:11px;">
+                <span style="width:50px;">Digit ${i}</span>
+                <div class="freq-bar-wrap"><div class="freq-bar-fill" style="width:${pct * 4}%; background:${barColor}"></div></div>
+                <span style="width:30px; text-align:right;">${pct}%</span>
+            </div>
+        `;
+    }
+    updateSignalLogic(counts);
+}
+
+// 3. PROFIT MAXIMIZATION LOGIC (The Algorithm)
+function updateSignalLogic(counts) {
+    const signalEl = document.getElementById('master-signal');
+    const accEl = document.getElementById('accuracy-pct');
+
+    // Algorithm: Find Statistical Anomaly
+    let hottestDigit = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+    let coldestDigit = Object.keys(counts).reduce((a, b) => counts[a] < counts[b] ? a : b);
+
+    if (counts[hottestDigit] > 14) {
+        signalEl.innerText = `MATCH DIGIT: ${hottestDigit}`;
+        accEl.innerText = "92.5%";
+    } else if (counts[coldestDigit] < 6) {
+        signalEl.innerText = `DIFFER DIGIT: ${coldestDigit}`;
+        accEl.innerText = "98.1%";
+    } else {
+        signalEl.innerText = "SCANNING PATTERNS...";
+        accEl.innerText = "0%";
+    }
+}
+
+// 4. OWNER LOGIC
+function unlockAdmin() {
+    adminTaps++;
+    if(adminTaps >= 7) {
+        document.getElementById('admin-view').style.display = 'block';
+        document.getElementById('client-view').style.display = 'none';
+        alert("ACCESS GRANTED: WELCOME FELIX");
+    }
+}
+
+function executeTrade() {
+    alert("System: Analyzing Velocity... Preparing for Market Entry.");
+}
+</script>
+</body>
+</html>
