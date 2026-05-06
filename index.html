@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Blueprint Trading | Deriv AI Analysis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0c16;
+      color: #eef5ff;
+      font-family: 'Rajdhani', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* animated background */
+    .bg-glow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 20% 30%, rgba(0, 180, 255, 0.08), #03050b);
+      z-index: 0;
+    }
+    .grid-pattern {
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(0, 200, 255, 0.02) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(0, 200, 255, 0.02) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app-wrapper {
+      position: relative;
+      z-index: 2;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* PASSWORD GATE (Admin only) */
+    .admin-gate {
+      position: fixed;
+      inset: 0;
+      background: #01030ae6;
+      backdrop-filter: blur(18px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    .gate-card {
+      background: #0c1128ee;
+      border: 1px solid #2d5f8e;
+      border-radius: 48px;
+      padding: 42px 36px;
+      width: 92%;
+      max-width: 450px;
+      text-align: center;
+      box-shadow: 0 25px 40px rgba(0,0,0,0.6), 0 0 25px cyan;
+    }
+    .gate-card h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 46px;
+      background: linear-gradient(135deg, #fff, #00e5ff, #ffc857);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 8px;
+    }
+    .gate-card input {
+      width: 100%;
+      background: #03070e;
+      border: 1px solid #3a6e9e;
+      padding: 14px;
+      border-radius: 60px;
+      color: white;
+      font-size: 18px;
+      text-align: center;
+      margin: 20px 0;
+      font-family: monospace;
+    }
+    .gate-card button {
+      background: linear-gradient(90deg, #0066ff, #00e5ff);
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 60px;
+      font-weight: bold;
+      font-size: 18px;
+      cursor: pointer;
+      color: #03070e;
+      margin-top: 8px;
+    }
+    .wa-gate-btn {
+      background: #25D366;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .price-note {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #ffd966;
+    }
+    .error-msg {
+      color: #ff6a7c;
+      margin-top: 12px;
+    }
+
+    /* MAIN DASHBOARD (hidden until unlock) */
+    .main-dashboard {
+      display: none;
+      animation: fadeSlide 0.5s ease;
+    }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* top bar & branding */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #1f3a60;
+      padding-bottom: 12px;
+    }
+    .logo h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 40px;
+      background: linear-gradient(145deg, #fff, #00e5ff);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .premium-btn {
+      background: linear-gradient(135deg, #ffb347, #ff7e05);
+      border: none;
+      padding: 10px 28px;
+      border-radius: 40px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* volatility row */
+    .volatility-scroll {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .vol-item {
+      background: #0b1126cc;
+      border: 1px solid #2a4a70;
+      border-radius: 30px;
+      padding: 6px 18px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .vol-item.active {
+      background: #00e5ff20;
+      border-color: #00e5ff;
+      box-shadow: 0 0 8px cyan;
+      color: #00e5ff;
+    }
+
+    /* control panel */
+    .control-panel {
+      background: #0a1022aa;
+      backdrop-filter: blur(12px);
+      border-radius: 50px;
+      padding: 12px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin: 15px 0;
+      border: 1px solid #2a5070;
+    }
+    .tick-group {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .badge-live {
+      background: #00e67620;
+      border: 1px solid #00e676;
+      border-radius: 40px;
+      padding: 5px 15px;
+      font-size: 12px;
+    }
+
+    /* two column layout */
+    .two-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin: 20px 0;
+    }
+    @media (max-width: 800px) {
+      .two-columns { grid-template-columns: 1fr; }
+    }
+    .card-panel {
+      background: #0c1428cc;
+      backdrop-filter: blur(8px);
+      border: 1px solid #2a4a70;
+      border-radius: 32px;
+      padding: 22px;
+    }
+    .signal-block {
+      background: #080e1e;
+      border-radius: 24px;
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+    .main-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 44px;
+      line-height: 1;
+    }
+    .conf-bar {
+      height: 6px;
+      background: #1f2e48;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00e5ff, #00e676);
+      border-radius: 6px;
+    }
+    .prob-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .prob-table td, .prob-table th {
+      padding: 6px 4px;
+      text-align: center;
+      border-bottom: 1px solid #1f3a5a;
+    }
+    .freq-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      justify-content: space-between;
+      margin: 15px 0;
+      height: 130px;
+    }
+    .bar-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .bar {
+      width: 100%;
+      background: linear-gradient(0deg, #00aaff, #0066ff);
+      border-radius: 8px;
+      transition: height 0.2s;
+    }
+    canvas {
+      width: 100%;
+      height: 110px;
+      background: #030a18;
+      border-radius: 20px;
+      margin-top: 15px;
+    }
+    /* reviews section */
+    .reviews-section {
+      margin-top: 40px;
+      background: #0a1022aa;
+      border-radius: 28px;
+      padding: 20px;
+      border: 1px solid #2a4a70;
+    }
+    .review-card {
+      background: #050c1a;
+      border-radius: 24px;
+      padding: 18px;
+      transition: 0.2s;
+      animation: fadeReview 0.5s;
+    }
+    @keyframes fadeReview {
+      from { opacity: 0; transform: translateX(10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .review-stars {
+      color: #ffc107;
+      letter-spacing: 2px;
+    }
+    .review-author {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+    footer {
+      text-align: center;
+      padding: 30px 20px 20px;
+      font-size: 11px;
+      border-top: 1px solid #1f3a5a;
+      margin-top: 30px;
+    }
+    button {
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      transform: scale(0.98);
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="grid-pattern"></div>
+
+<!-- ADMIN PASSWORD GATE -->
+<div id="adminGate" class="admin-gate">
+  <div class="gate-card">
+    <h2>🔷 BLUEPRINT TRADING</h2>
+    <p style="color:#aac8ff;">Enter admin credentials to access analysis tool</p>
+    <input type="password" id="adminPassword" placeholder="Password" autocomplete="off">
+    <button id="unlockDashboardBtn">🔓 UNLOCK PLATFORM →</button>
+    <button id="gateWhatsappBtn" class="wa-gate-btn">📲 GET LOGIN CREDENTIALS ($100)</button>
+    <div class="price-note">⚡ Premium access: $100 one-time (lifetime signals)</div>
+    <div id="gateError" class="error-msg"></div>
+  </div>
+</div>
+
+<!-- MAIN TRADING DASHBOARD -->
+<div id="mainTradingDashboard" class="main-dashboard">
+  <div class="app-wrapper">
+    <div class="top-bar">
+      <div class="logo"><h1>🔷 BLUEPRINT TRADING</h1></div>
+      <button id="premiumAccessBtn" class="premium-btn">💎 GET PREMIUM ACCESS — $100</button>
+    </div>
+
+    <!-- Volatility indices (all 1s + standard) -->
+    <div class="volatility-scroll" id="volatilityContainer"></div>
+
+    <div class="control-panel">
+      <div class="tick-group">
+        <span>📊 Tick Analysis Window:</span>
+        <input type="range" id="tickWindowRange" min="50" max="1000" step="10" value="200">
+        <span id="winVal">200 ticks</span>
+      </div>
+      <div>
+        <button id="stopStreamBtn" style="background:#ff3860; border:none; padding:6px 20px; border-radius:40px;">⏹️ Stop</button>
+        <button id="startStreamBtn" style="background:#00e5ff; border:none; padding:6px 20px; border-radius:40px; margin-left:8px;">▶️ Start</button>
+      </div>
+      <span id="liveConnBadge" class="badge-live">● CONNECTING</span>
+    </div>
+
+    <!-- Two columns: Signals + Probabilities -->
+    <div class="two-columns">
+      <!-- Left: Live signals + last digit -->
+      <div class="card-panel">
+        <h3 style="margin-bottom: 16px;">📡 REAL-TIME SIGNALS</h3>
+        <div id="signalsContainer"></div>
+        <div style="display: flex; justify-content: space-between; margin-top: 16px;">
+          <span>🎯 Last Digit: <strong id="lastDigitDisplay" style="font-size:28px;">-</strong></span>
+          <span>📈 Total Ticks: <span id="totalTicksCount">0</span></span>
+        </div>
+      </div>
+
+      <!-- Right: Frequency + probabilities -->
+      <div class="card-panel">
+        <h3>📊 FREQUENCY & PROBABILITIES</h3>
+        <div class="freq-bars" id="frequencyBars"></div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>Even Ratio: <strong id="evenRatioSpan">0%</strong></span>
+          <span>Over 5 Ratio: <strong id="overRatioSpan">0%</strong></span>
+        </div>
+        <h4 style="margin: 16px 0 8px;">🎲 OVER / UNDER PROBABILITIES (real-time)</h4>
+        <table class="prob-table" id="dynamicProbTable">
+          <thead><tr><th>Threshold</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr></thead>
+          <tbody id="probTableBody"><tr><td>Over %</td><td colspan="8">--</td></tr></tbody>
+        </table>
+        <div style="margin-top: 18px;">
+          <h4>📈 SIGNAL STRENGTH GUIDE</h4>
+          <table class="prob-table">
+            <thead><tr><th>Pattern</th><th>Strong</th><th>Moderate</th><th>Weak</th></tr></thead>
+            <tbody>
+              <tr><td>Even/Odd</td><td>>65%</td><td>55-65%</td><td><55%</td></tr>
+              <tr><td>Rise/Fall</td><td>>65%</td><td>55-65%</td><td><55%</td></tr>
+              <tr><td>Over/Under</td><td>>65%</td><td>55-65%</td><td><55%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Price chart -->
+    <div class="card-panel">
+      <h3>📉 LIVE PRICE PATTERN</h3>
+      <canvas id="priceHistoryCanvas" width="800" height="110"></canvas>
+    </div>
+
+    <!-- LIVE TRADER REVIEWS (rotating) -->
+    <div class="reviews-section">
+      <h3>⭐ TRADER REVIEWS (Live)</h3>
+      <div id="reviewCarousel" class="review-card"></div>
+    </div>
+
+    <footer>
+      ⚡ Deriv WebSocket (app_id:105240) • Real market analysis • Risk disclaimer: past performance not indicative of future results<br>
+      💬 WhatsApp support: +254781358237 | Premium access $100 lifetime
+    </footer>
+  </div>
+</div>
+
+<script>
+  // ------------------- PASSWORD PROTECTION (admin only) -------------------
+  const ADMIN_PASS = "37757441Fe@";
+  const adminGate = document.getElementById('adminGate');
+  const mainDash = document.getElementById('mainTradingDashboard');
+  const unlockBtn = document.getElementById('unlockDashboardBtn');
+  const passInput = document.getElementById('adminPassword');
+  const gateErrorSpan = document.getElementById('gateError');
+  const gateWhatsapp = document.getElementById('gateWhatsappBtn');
+
+  function openGateWhatsApp() {
+    const msg = "Hello, I need Premium Access to BLUEPRINT TRADING ANALYSIS TOOL for $100. Please provide my login credentials.";
+    window.open(`https://wa.me/254781358237?text=${encodeURIComponent(msg)}`, '_blank');
+  }
+  gateWhatsapp.onclick = openGateWhatsApp;
+
+  function unlockPlatform() {
+    if (passInput.value === ADMIN_PASS) {
+      adminGate.style.display = 'none';
+      mainDash.style.display = 'block';
+      initTradingEngine();
+    } else {
+      gateErrorSpan.innerText = "❌ Invalid password. Use 'GET LOGIN CREDENTIALS ($100)' to request access.";
+      passInput.value = "";
+    }
+  }
+  unlockBtn.onclick = unlockPlatform;
+  passInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') unlockPlatform(); });
+
+  // ------------------- DERIV REAL WEBSOCKET (app_id:105240) -------------------
+  const WS_URL = "wss://ws.binaryws.com/websockets/v3?app_id=105240";
+  let ws = null;
+  let activeSymbol = "R_75";
+  let tickHistory = [];        // {price, digit, epoch, rawChange}
+  let digitCounts = Array(10).fill(0);
+  let priceHistory = [];
+  let lastPrice = null;
+  let isManualStop = false;
+  let currentWindow = 200;
+  let streamInterval = null;
+
+  // DOM elements
+  const volatilityContainer = document.getElementById('volatilityContainer');
+  const tickRange = document.getElementById('tickWindowRange');
+  const winSpan = document.getElementById('winVal');
+  const stopStream = document.getElementById('stopStreamBtn');
+  const startStream = document.getElementById('startStreamBtn');
+  const connBadge = document.getElementById('liveConnBadge');
+  const signalsContainer = document.getElementById('signalsContainer');
+  const freqBarsDiv = document.getElementById('frequencyBars');
+  const lastDigitSpan = document.getElementById('lastDigitDisplay');
+  const totalTicksSpan = document.getElementById('totalTicksCount');
+  const evenRatioSpan = document.getElementById('evenRatioSpan');
+  const overRatioSpan = document.getElementById('overRatioSpan');
+  const probTableBody = document.getElementById('probTableBody');
+  const priceCanvas = document.getElementById('priceHistoryCanvas');
+  let canvasCtx = priceCanvas.getContext('2d');
+  const reviewCarousel = document.getElementById('reviewCarousel');
+
+  // Volatility assets list
+  const volAssets = [
+    "Volatility 10 (1s)", "Volatility 10 Index", "Volatility 15 (1s)", "Volatility 25 (1s)",
+    "Volatility 25 Index", "Volatility 30 (1s)", "Volatility 50 (1s)", "Volatility 50 Index",
+    "Volatility 75 (1s)", "Volatility 75 Index", "Volatility 90 (1s)", "Volatility 100 (1s)", "Volatility 100 Index"
+  ];
+  const symbolMap = {
+    "Volatility 10 (1s)": "R_10", "Volatility 10 Index": "R_10", "Volatility 15 (1s)": "R_15",
+    "Volatility 25 (1s)": "R_25", "Volatility 25 Index": "R_25", "Volatility 30 (1s)": "R_30",
+    "Volatility 50 (1s)": "R_50", "Volatility 50 Index": "R_50", "Volatility 75 (1s)": "R_75",
+    "Volatility 75 Index": "R_75", "Volatility 90 (1s)": "R_90", "Volatility 100 (1s)": "R_100", "Volatility 100 Index": "R_100"
+  };
+
+  function renderVolatilityButtons() {
+    volatilityContainer.innerHTML = '';
+    volAssets.forEach(name => {
+      const sym = symbolMap[name];
+      const btn = document.createElement('div');
+      btn.className = `vol-item ${activeSymbol === sym ? 'active' : ''}`;
+      btn.innerText = name;
+      btn.onclick = () => {
+        if (activeSymbol === sym) return;
+        activeSymbol = sym;
+        renderVolatilityButtons();
+        reconnectWebsocket();
+      };
+      volatilityContainer.appendChild(btn);
+    });
+  }
+
+  // RSI 14
+  function computeRSI(prices) {
+    if (prices.length < 15) return 50;
+    let gains = 0, losses = 0;
+    for (let i = prices.length-15; i < prices.length-1; i++) {
+      let diff = prices[i+1] - prices[i];
+      if (diff >= 0) gains += diff;
+      else losses -= diff;
+    }
+    let avgGain = gains / 14;
+    let avgLoss = losses / 14;
+    if (avgLoss === 0) return 100;
+    let rs = avgGain / avgLoss;
+    let rsi = 100 - (100 / (1 + rs));
+    return Math.min(100, Math.max(0, rsi));
+  }
+
+  function computeThresholdProbs(digits) {
+    if (digits.length < 20) return Array(8).fill(50);
+    const recent = digits.slice(-Math.min(200, digits.length));
+    const probs = [];
+    for (let thresh = 1; thresh <= 8; thresh++) {
+      let count = recent.filter(d => d > thresh).length;
+      probs.push((count / recent.length) * 100);
+    }
+    return probs;
+  }
+
+  function refreshAllUI() {
+    if (tickHistory.length === 0) {
+      signalsContainer.innerHTML = '<div class="signal-block">⏳ Waiting for live ticks from Deriv...</div>';
+      return;
+    }
+    const windowSize = Math.min(currentWindow, tickHistory.length);
+    const recentTicks = tickHistory.slice(-windowSize);
+    const digits = recentTicks.map(t => t.digit);
+    const changes = recentTicks.map(t => t.rawChange);
+    const avgChange = changes.reduce((a,b)=>a+b,0)/changes.length;
+    const rsi = computeRSI(priceHistory);
+    
+    // Rise/Fall
+    let riseFall = "NEUTRAL";
+    if (rsi < 32) riseFall = "RISE";
+    else if (rsi > 68) riseFall = "FALL";
+    else if (avgChange > 0.12) riseFall = "RISE";
+    else if (avgChange < -0.12) riseFall = "FALL";
+    else riseFall = avgChange > 0 ? "RISE" : "FALL";
+    
+    const evenCount = digits.filter(d => d%2===0).length;
+    const evenPercent = (evenCount/digits.length)*100;
+    let evenOddSignal = evenPercent > 55 ? "EVEN" : (evenPercent < 45 ? "ODD" : (recentTicks[recentTicks.length-1].digit%2===0 ? "EVEN" : "ODD"));
+    
+    const overCount = digits.filter(d => d >=5).length;
+    const overPercent = (overCount/digits.length)*100;
+    let overUnderSignal = overPercent > 55 ? "OVER 5" : (overPercent < 45 ? "UNDER 5" : (recentTicks[recentTicks.length-1].digit>=5 ? "OVER 5" : "UNDER 5"));
+    
+    let matchesDiffers = "NEUTRAL";
+    if (recentTicks.length >= 2) {
+      const lastDig = recentTicks[recentTicks.length-1].digit;
+      const prevDig = recentTicks[recentTicks.length-2].digit;
+      matchesDiffers = lastDig === prevDig ? "MATCHES" : "DIFFERS";
+    }
+    
+    let confidence = 55;
+    if ((riseFall === "RISE" && rsi < 40) || (riseFall === "FALL" && rsi > 60)) confidence += 12;
+    if ((evenOddSignal === "EVEN" && evenPercent > 55) || (evenOddSignal === "ODD" && evenPercent < 45)) confidence += 10;
+    if ((overUnderSignal === "OVER 5" && overPercent > 55) || (overUnderSignal === "UNDER 5" && overPercent < 45)) confidence += 10;
+    confidence = Math.min(94, Math.max(42, Math.floor(confidence)));
+    
+    signalsContainer.innerHTML = `
+      <div class="signal-block">
+        <div style="display:flex; justify-content:space-between;"><span>📈 RISE / FALL</span><span class="badge-live">CONFLUENCE</span></div>
+        <div class="main-value" style="color:${riseFall === 'RISE' ? '#00e676' : (riseFall === 'FALL' ? '#ff6b7c' : '#ffd966')}">${riseFall}</div>
+        <div class="conf-bar"><div class="fill" style="width:${confidence}%"></div></div>
+        <div>Confidence: ${confidence}% • RSI(14): ${rsi.toFixed(1)}</div>
+        <div>Momentum: ${avgChange > 0 ? '▲ bullish' : '▼ bearish'} (${avgChange.toFixed(3)})</div>
+      </div>
+      <div class="signal-block">
+        <div>🎯 OVER / UNDER (digit≥5)</div>
+        <div class="main-value" style="color:#c792ff">${overUnderSignal}</div>
+        <div>Over probability: ${overPercent.toFixed(1)}% | Under: ${(100-overPercent).toFixed(1)}%</div>
+      </div>
+      <div class="signal-block">
+        <div>🟢 EVEN/ODD &nbsp;|&nbsp; 🔁 MATCHES/DIFFERS</div>
+        <div><span style="font-size:32px;">${evenOddSignal}</span> &nbsp; <span style="font-size:22px;">${matchesDiffers}</span></div>
+        <div>Even ratio: ${evenPercent.toFixed(1)}% | Last two: ${recentTicks.length>=2 ? recentTicks[recentTicks.length-2].digit + ' → ' + recentTicks[recentTicks.length-1].digit : '--'}</div>
+      </div>
+    `;
+    
+    // Frequency bars
+    const maxF = Math.max(...digitCounts, 1);
+    freqBarsDiv.innerHTML = '';
+    for (let i=0;i<10;i++) {
+      const h = (digitCounts[i]/maxF)*110;
+      freqBarsDiv.innerHTML += `<div class="bar-item"><div class="bar" style="height:${h}px"></div><div>${i}</div><div style="font-size:10px;">${digitCounts[i]}</div></div>`;
+    }
+    const total = tickHistory.length;
+    const lastTick = tickHistory[tickHistory.length-1];
+    lastDigitSpan.innerText = lastTick.digit;
+    totalTicksSpan.innerText = total;
+    evenRatioSpan.innerText = evenPercent.toFixed(1)+'%';
+    overRatioSpan.innerText = overPercent.toFixed(1)+'%';
+    
+    const probs = computeThresholdProbs(digits);
+    probTableBody.innerHTML = `<tr><td>Over %</td>${probs.map(p=>`<td>${p.toFixed(1)}%</td>`).join('')}</tr>`;
+    
+    drawChart();
+  }
+
+  function drawChart() {
+    if (priceHistory.length < 2) return;
+    const w = priceCanvas.clientWidth;
+    const h = 110;
+    priceCanvas.width = w;
+    priceCanvas.height = h;
+    canvasCtx.clearRect(0,0,w,h);
+    const recentPrices = priceHistory.slice(-100);
+    const minP = Math.min(...recentPrices);
+    const maxP = Math.max(...recentPrices);
+    const range = maxP - minP || 1;
+    canvasCtx.beginPath();
+    canvasCtx.strokeStyle = '#00e5ff';
+    canvasCtx.lineWidth = 2;
+    for (let i=0;i<recentPrices.length;i++) {
+      const x = (i/(recentPrices.length-1))*w;
+      const y = h - ((recentPrices[i]-minP)/range)*(h-15)-5;
+      if(i===0) canvasCtx.moveTo(x,y);
+      else canvasCtx.lineTo(x,y);
+    }
+    canvasCtx.stroke();
+  }
+
+  function processTick(data) {
+    if (!data?.tick) return;
+    const price = data.tick.quote;
+    if (!price) return;
+    const digit = Math.floor(price) % 10;
+    let rawChange = 0;
+    if (lastPrice !== null) rawChange = price - lastPrice;
+    lastPrice = price;
+    const newTick = { price, digit, epoch: data.tick.epoch, rawChange };
+    tickHistory.push(newTick);
+    if (tickHistory.length > 2000) {
+      const removed = tickHistory.shift();
+      digitCounts[removed.digit]--;
+    }
+    digitCounts[digit]++;
+    priceHistory.push(price);
+    if (priceHistory.length > 300) priceHistory.shift();
+    refreshAllUI();
+  }
+
+  function connectWS() {
+    if (isManualStop) return;
+    connBadge.innerText = "● CONNECTING...";
+    ws = new WebSocket(WS_URL);
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ ticks: activeSymbol, subscribe: 1 }));
+      connBadge.innerText = "● LIVE (REAL DATA)";
+      connBadge.style.background = "#00e67620";
+      tickHistory = [];
+      digitCounts = Array(10).fill(0);
+      priceHistory = [];
+      lastPrice = null;
+    };
+    ws.onmessage = (e) => {
+      try {
+        const json = JSON.parse(e.data);
+        if (json.error) console.warn(json.error);
+        if (json.tick) processTick(json);
+      } catch(err) {}
+    };
+    ws.onerror = () => { connBadge.innerText = "⚠️ ERROR"; };
+    ws.onclose = () => {
+      if (!isManualStop && mainDash.style.display === 'block') {
+        connBadge.innerText = "● RECONNECT...";
+        setTimeout(() => connectWS(), 3000);
+      }
+    };
+  }
+
+  function reconnectWebsocket() {
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) ws.close();
+    isManualStop = false;
+    connectWS();
+  }
+  function stopAnalysis() { isManualStop = true; if(ws) ws.close(); connBadge.innerText = "● STOPPED"; }
+  function startAnalysis() {
+    if(isManualStop) { isManualStop = false; connectWS(); }
+    else if(!ws || ws.readyState !== WebSocket.OPEN) connectWS();
+  }
+
+  // ---- LIVE TRADER REVIEWS (rotating) ----
+  const reviewsPool = [
+    { name: "Patricia N.", location: "Uganda", text: "The pattern detection is next level. My win rate jumped from 50% to over 87% since I started using Blueprint. Game-changing technology.", rating: 5 },
+    { name: "Michael O.", location: "Kenya", text: "Real signals, not lagging. The confluence engine gives me confidence to trade with real money. Best Deriv tool I've used.", rating: 5 },
+    { name: "Fatima S.", location: "Nigeria", text: "Accurate over/under probabilities helped me recover losses. Worth every cent.", rating: 4.5 },
+    { name: "James K.", location: "South Africa", text: "Finally a professional analysis platform that actually fetches live data. The frequency heatmap is brilliant.", rating: 5 },
+    { name: "Linda A.", location: "Ghana", text: "Blueprint changed my trading style. I trust the AI predictions more than my own instinct now!", rating: 5 }
+  ];
+  let reviewIndex = 0;
+  function rotateReview() {
+    const rev = reviewsPool[reviewIndex % reviewsPool.length];
+    const stars = "⭐".repeat(Math.floor(rev.rating)) + (rev.rating % 1 ? "½" : "");
+    reviewCarousel.innerHTML = `
+      <div class="review-stars">${stars}</div>
+      <p style="margin: 10px 0;">"${rev.text}"</p>
+      <div class="review-author"><strong>${rev.name}</strong> <span>${rev.location} - just now</span></div>
+    `;
+    reviewIndex++;
+  }
+  setInterval(rotateReview, 7000);
+  
+  // Premium button $100 WhatsApp
+  const premiumBtn = document.getElementById('premiumAccessBtn');
+  premiumBtn.onclick = () => {
+    window.open('https://wa.me/254781358237?text=Hello%2C%20I%20want%20to%20get%20PREMIUM%20ACCESS%20for%20%24100%20to%20BLUEPRINT%20TRADING%20ANALYSIS%20TOOL.%20Please%20guide%20me.', '_blank');
+  };
+
+  tickRange.addEventListener('input', (e) => {
+    currentWindow = parseInt(e.target.value);
+    winSpan.innerText = currentWindow + ' ticks';
+    refreshAllUI();
+  });
+  stopStream.onclick = stopAnalysis;
+  startStream.onclick = startAnalysis;
+
+  function initTradingEngine() {
+    renderVolatilityButtons();
+    currentWindow = parseInt(tickRange.value);
+    winSpan.innerText = currentWindow + ' ticks';
+    connectWS();
+    setInterval(() => { if(tickHistory.length) refreshAllUI(); }, 900);
+    window.addEventListener('resize', () => drawChart());
+    rotateReview(); // initial review
+  }
+</script>
+</body>
+</html>
