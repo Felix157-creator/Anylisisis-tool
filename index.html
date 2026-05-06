@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Expert Trader</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* ===== BASE ===== */
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #1a1a2e;
+      color: white;
+    }
+
+    /* ===== LOGIN / PASSWORD GATE ===== */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      background: #1a1a2e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+    }
+    .login-box {
+      background: linear-gradient(to bottom, #2c2f48, #1a1a2e);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 40px 30px;
+      width: 300px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(46,110,255,0.2);
+    }
+    .login-logo { font-size: 48px; margin-bottom: 10px; }
+    .login-title { font-size: 22px; color: white; margin-bottom: 6px; }
+    .login-subtitle { color: #aaa; font-size: 13px; margin-bottom: 20px; }
+    .login-input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: #111;
+      color: white;
+      font-size: 15px;
+      text-align: center;
+      margin-bottom: 14px;
+      outline: none;
+    }
+    .login-input:focus {
+      border-color: #2e6eff;
+      box-shadow: 0 0 8px rgba(46,110,255,0.4);
+    }
+    .login-btn {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(to right, #2e6eff, #7b2fff);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .login-btn:hover { opacity: 0.9; }
+    .login-error { color: #ff6b6b; font-size: 13px; margin-top: 12px; }
+
+    /* ===== LOADER ===== */
+    .loader-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(26,26,46,0.85);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .loader-circle {
+      position: relative;
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      filter: drop-shadow(0 6px 16px rgba(0,0,0,0.45));
+    }
+    .loader-track {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 10px solid rgba(255,255,255,0.28);
+      box-shadow: inset 0 0 12px rgba(0,0,0,0.25), 0 0 18px rgba(255,255,255,0.08);
+    }
+    .loader-arc {
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      background: conic-gradient(
+        from 0deg,
+        rgba(46,110,255,0) 0%, rgba(46,110,255,0) 72%,
+        #2e6eff 78%, rgba(46,110,255,0) 86%, rgba(46,110,255,0) 100%
+      );
+      -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 20px), #000 0);
+      mask: radial-gradient(farthest-side, #0000 calc(100% - 20px), #000 0);
+      animation: loader-rotate 1.15s linear infinite;
+    }
+    @keyframes loader-rotate { to { transform: rotate(360deg); } }
+
+    /* ===== CONTAINER & UI ===== */
+    .container {
+      max-width: 380px;
+      margin: 20px auto;
+      padding: 20px;
+      background: linear-gradient(to bottom, #eee, #111);
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      transition: opacity 0.3s ease;
+    }
+    .header { text-align: left; position: relative; }
+    .highlight { color: purple; }
+
+    .logout-btn, .connector-btn {
+      background: #ff4d4f;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      position: absolute;
+      top: 0;
+      cursor: pointer;
+    }
+    .logout-btn { right: 0; }
+    .connector-btn {
+      top: 40px;
+      right: 0;
+      background: linear-gradient(to right, #ff7e7e, #ff4d4f);
+    }
+
+    .controls { margin-top: 90px; }
+    .left-column { display: flex; flex-direction: column; gap: 10px; }
+    .trade-duration-group { display: flex; gap: 10px; }
+
+    .dropdown {
+      background: #2c2f48;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .full-width  { width: 100%; }
+    .duration-width { width: 130px; }
+    .xsmall-width { width: 105px; }
+
+    .bot-dropdown {
+      background: linear-gradient(to right, #9900ff, #cc33ff);
+      font-weight: bold;
+      color: white;
+    }
+
+    .live-price {
+      background: #2d2d3a;
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+    #selectedIndex { color: #aaa; font-size: 16px; margin-bottom: 5px; }
+    #livePrice { color: #2e6eff; font-size: 24px; }
+
+    .stop-btn {
+      width: 100%;
+      background: linear-gradient(to right, orange, red);
+      border: none;
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      font-weight: bold;
+      margin-top: 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    /* ===== DIGITS ===== */
+    .digits-container {
+      margin-top: 25px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .digits-group {
+      background: rgba(255,255,255,0.08);
+      padding: 10px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .digit-title { margin-bottom: 10px; color: #00cfff; }
+    .digits-row {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .digit {
+      background: #fff;
+      color: #000;
+      font-weight: bold;
+      border-radius: 8px;
+      width: 35px;
+      height: 35px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ===== ACTION BUTTONS ===== */
+    .action-buttons {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    .action-btn {
+      width: 80%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 15px;
+      color: white;
+      cursor: pointer;
+    }
+    .overunder-btn { background: linear-gradient(to right, #ff9966, #ff5e62); }
+    .evenodd-btn   { background: linear-gradient(to right, #56ccf2, #2f80ed); }
+
+    /* ===== SIGNAL BOXES ===== */
+    .signal-box {
+      width: 80%;
+      margin-top: 6px;
+      padding: 10px 12px;
+      font-size: 14px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.35);
+      box-shadow: inset 0 0 8px rgba(255,255,255,0.06);
+      text-align: center;
+      min-height: 40px;
+    }
+    .signal-good { border: 1px solid #00ffb3; box-shadow: 0 0 10px rgba(0,255,179,0.2) inset; }
+    .signal-warn { border: 1px solid #ffd166; box-shadow: 0 0 10px rgba(255,209,102,0.2) inset; }
+    .signal-bad  { border: 1px solid #ff6b6b; box-shadow: 0 0 10px rgba(255,107,107,0.2) inset; }
+    .signal-title { display: block; font-weight: 800; margin-bottom: 4px; color: #e8f1ff; }
+    .signal-main  { font-size: 16px; font-weight: 900; }
+    .signal-meta  { display: block; margin-top: 4px; font-size: 12px; color: #d2dcff; opacity: 0.9; }
+
+    /* ===== MATCHES / DIFFERS ORB ===== */
+    .md-strip {
+      margin-top: 22px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 14px;
+    }
+    .md-btn {
+      background: linear-gradient(180deg, #3a0ca3, #240046);
+      border: none;
+      color: #e0e0ff;
+      font-weight: 800;
+      padding: 14px 12px;
+      border-radius: 12px;
+      box-shadow: 0 8px 18px rgba(20,10,60,0.35);
+      cursor: pointer;
+    }
+    .md-btn:active { transform: translateY(1px); }
+
+    .digit-orb {
+      position: relative;
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, #103 0%, #0b0f2e 60%, #08122c 100%);
+      display: grid;
+      place-items: center;
+      box-shadow: inset 0 0 22px rgba(0,200,255,0.35), 0 0 22px rgba(0,200,255,0.15);
+      overflow: hidden;
+    }
+    .digit-orb #predictedDigit {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: #e7f5ff;
+      text-shadow: 0 0 8px rgba(0,255,255,0.35);
+      z-index: 2;
+    }
+    .orb-glow {
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      padding: 6px;
+      background: conic-gradient(
+        from 0deg,
+        rgba(0,255,255,0) 0%, rgba(0,255,255,0) 55%,
+        rgba(0,255,255,0.85) 60%, rgba(0,255,255,0) 65%, rgba(0,255,255,0) 100%
+      );
+      -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 8px), #000 0);
+      mask: radial-gradient(farthest-side, #0000 calc(100% - 8px), #000 0);
+      animation: sweep 2s linear infinite;
+      z-index: 1;
+    }
+    @keyframes sweep { to { transform: rotate(360deg); } }
+
+    /* ===== COUNTDOWN ===== */
+    .update-note {
+      margin-top: 12px;
+      text-align: center;
+      background: rgba(0,0,0,0.25);
+      border-radius: 12px;
+      padding: 10px 12px;
+      line-height: 1.4;
+      box-shadow: inset 0 0 8px rgba(255,255,255,0.05);
+    }
+    #countdownNote { margin-top: 4px; color: #d9e4ff; font-weight: 600; display: none; }
+
+    /* ===== PULSES ===== */
+    .good-pulse { animation: good 0.8s ease; }
+    .bad-pulse  { animation: bad  0.8s ease; }
+    @keyframes good {
+      0%   { box-shadow: 0 0 0 0   rgba(0,255,170,0.6); }
+      100% { box-shadow: 0 0 0 12px rgba(0,255,170,0);   }
+    }
+    @keyframes bad {
+      0%   { box-shadow: 0 0 0 0   rgba(255,90,90,0.7); }
+      100% { box-shadow: 0 0 0 12px rgba(255,90,90,0);   }
+    }
+
+    /* ===== CHARTS ===== */
+    .chart-section {
+      margin-top: 25px;
+      padding: 15px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 0 12px rgba(0,0,0,0.4);
+    }
+    .chart-section h3 { margin-bottom: 12px; font-size: 18px; font-weight: bold; color: #66a3ff; }
+    #freqChart    { max-width: 100%; height: 250px; }
+    .last-digit   { margin-top: 12px; font-size: 18px; font-weight: bold; color: #ffd700; }
+    #patternChart { max-width: 100%; height: 250px; }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== PASSWORD GATE ===== -->
+  <div id="loginOverlay" class="login-overlay">
+    <div class="login-box">
+      <div class="login-logo">🔐</div>
+      <h2 class="login-title"><span style="color:purple">Expert</span> Trader</h2>
+      <p class="login-subtitle">Enter your access password</p>
+      <input type="password" id="passwordInput" class="login-input" placeholder="Password" />
+      <button id="loginBtn" class="login-btn">Unlock</button>
+      <p id="loginError" class="login-error" style="display:none">❌ Incorrect password. Try again.</p>
+    </div>
+  </div>
+
+  <!-- ===== LOADER ===== -->
+  <div id="loader" class="loader-overlay">
+    <div class="loader-circle">
+      <div class="loader-track"></div>
+      <div class="loader-arc"></div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN APP ===== -->
+  <div class="container" id="mainContainer" style="display:none">
+    <div class="header">
+      <h1><span class="highlight">Expert</span> Trader</h1>
+      <button class="logout-btn" id="logoutBtn">Logout</button>
+      <button class="connector-btn">Deriv Connector</button>
+    </div>
+
+    <div class="controls">
+      <div class="left-column">
+        <select id="marketSelect" class="dropdown xsmall-width">
+          <option selected disabled>Market</option>
+        </select>
+
+        <select id="volatilitySelect" class="dropdown full-width">
+          <option value="1HZ10V"  selected>Volatility 10 (1s) Index</option>
+          <option value="R_10">Volatility 10 Index</option>
+          <option value="1HZ15V">Volatility 15 (1s) Index</option>
+          <option value="1HZ25V">Volatility 25 (1s) Index</option>
+          <option value="R_25">Volatility 25 Index</option>
+          <option value="1HZ30V">Volatility 30 (1s) Index</option>
+          <option value="1HZ50V">Volatility 50 (1s) Index</option>
+          <option value="R_50">Volatility 50 Index</option>
+          <option value="1HZ75V">Volatility 75 (1s) Index</option>
+          <option value="R_75">Volatility 75 Index</option>
+          <option value="1HZ90V">Volatility 90 (1s) Index</option>
+          <option value="1HZ100V">Volatility 100 (1s) Index</option>
+          <option value="R_100">Volatility 100 Index</option>
+        </select>
+
+        <div class="trade-duration-group">
+          <select id="contractType" class="dropdown full-width">
+            <option selected disabled>Trade Type</option>
+            <option>Even</option>
+            <option>Odd</option>
+            <option>Over</option>
+            <option>Under</option>
+            <option>Matches</option>
+            <option>Differs</option>
+          </select>
+          <select id="duration" class="dropdown duration-width">
+            <option selected disabled>Duration</option>
+            <option>1 Minute</option>
+            <option>2 Minutes</option>
+            <option>5 Minutes</option>
+          </select>
+        </div>
+
+        <select id="botType" class="dropdown bot-dropdown xsmall-width">
+          <option>Bot</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="live-price">
+      <div id="selectedIndex">Volatility 10 (1s) Index</div>
+      <div id="livePrice">----</div>
+    </div>
+
+    <button id="toggleBtn" class="stop-btn">Start Analysis</button>
+
+    <!-- Digits -->
+    <div class="digits-container">
+      <div class="digits-group">
+        <h3 class="digit-title">Over</h3>
+        <div class="digits-row">
+          <div class="digit">0</div><div class="digit">1</div><div class="digit">2</div>
+          <div class="digit">3</div><div class="digit">4</div>
+        </div>
+        <div class="digits-row">
+          <div class="digit">5</div><div class="digit">6</div><div class="digit">7</div>
+          <div class="digit">8</div><div class="digit">9</div>
+        </div>
+      </div>
+      <div class="digits-group">
+        <h3 class="digit-title">Under</h3>
+        <div class="digits-row">
+          <div class="digit">0</div><div class="digit">1</div><div class="digit">2</div>
+          <div class="digit">3</div><div class="digit">4</div>
+        </div>
+        <div class="digits-row">
+          <div class="digit">5</div><div class="digit">6</div><div class="digit">7</div>
+          <div class="digit">8</div><div class="digit">9</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button id="overUnderBtn" class="action-btn overunder-btn">Over / Under</button>
+      <div id="overunderSignal" class="signal-box" aria-live="polite"></div>
+      <button id="evenOddBtn" class="action-btn evenodd-btn">Even / Odd</button>
+      <div id="evenoddSignal" class="signal-box" aria-live="polite"></div>
+    </div>
+
+    <!-- Matches / Differs -->
+    <div class="md-strip">
+      <button id="matchesBtn" class="md-btn">Matches</button>
+      <div class="digit-orb">
+        <div class="orb-glow"></div>
+        <div id="predictedDigit">–</div>
+      </div>
+      <button id="differsBtn" class="md-btn">Differs</button>
+    </div>
+
+    <div class="update-note">
+      <div id="countdownNote">Next update in <b id="countdown">10</b> seconds</div>
+    </div>
+
+    <!-- Charts -->
+    <div class="chart-section">
+      <h3>Frequency Distribution</h3>
+      <canvas id="freqChart"></canvas>
+      <div class="last-digit">Last Digit: <span id="lastDigit">-</span></div>
+    </div>
+    <div class="chart-section">
+      <h3>Trading Pattern (Live Data)</h3>
+      <canvas id="patternChart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // ⚙️  CHANGE YOUR PASSWORD HERE
+    // ============================================================
+    const APP_PASSWORD = "Trader2025";
+
+    // ===== LOGIN LOGIC =====
+    const loginOverlay  = document.getElementById("loginOverlay");
+    const mainContainer = document.getElementById("mainContainer");
+    const loginBtn      = document.getElementById("loginBtn");
+    const passwordInput = document.getElementById("passwordInput");
+    const loginError    = document.getElementById("loginError");
+    const logoutBtn     = document.getElementById("logoutBtn");
+
+    function showApp() {
+      loginOverlay.style.display  = "none";
+      mainContainer.style.display = "block";
+      sessionStorage.setItem("expertTraderAuth", "true");
+    }
+    function showLogin() {
+      sessionStorage.removeItem("expertTraderAuth");
+      mainContainer.style.display = "none";
+      loginOverlay.style.display  = "flex";
+      passwordInput.value = "";
+      loginError.style.display = "none";
+    }
+
+    // Auto-unlock if already authenticated this session
+    if (sessionStorage.getItem("expertTraderAuth") === "true") showApp();
+
+    loginBtn.addEventListener("click", () => {
+      if (passwordInput.value === APP_PASSWORD) {
+        showApp();
+      } else {
+        loginError.style.display = "block";
+        passwordInput.value = "";
+        passwordInput.focus();
+      }
+    });
+    passwordInput.addEventListener("keydown", e => { if (e.key === "Enter") loginBtn.click(); });
+    logoutBtn.addEventListener("click", showLogin);
+
+    // ===== VOLATILITY SELECT LABEL =====
+    document.getElementById("volatilitySelect").addEventListener("change", function () {
+      document.getElementById("selectedIndex").textContent = this.options[this.selectedIndex].text;
+    });
+
+    // ===== CHART SETUP =====
+    const freqCtx    = document.getElementById("freqChart").getContext("2d");
+    const patternCtx = document.getElementById("patternChart").getContext("2d");
+
+    const freqData = { labels: ["0","1","2","3","4","5","6","7","8","9"], datasets: [{
+      label: "Frequency",
+      data: Array(10).fill(0),
+      backgroundColor: "rgba(46,110,255,0.7)",
+      borderColor: "#2e6eff",
+      borderWidth: 1,
+      borderRadius: 4
+    }]};
+
+    const patternData = { labels: [], datasets: [{
+      label: "Last Digit",
+      data: [],
+      borderColor: "#ff9966",
+      backgroundColor: "rgba(255,153,102,0.15)",
+      tension: 0.4,
+      fill: true,
+      pointRadius: 3
+    }]};
+
+    const freqChart = new Chart(freqCtx, {
+      type: "bar",
+      data: freqData,
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: "#fff" } } },
+        scales: {
+          x: { ticks: { color: "#aaa" }, grid: { color: "rgba(255,255,255,0.05)" } },
+          y: { ticks: { color: "#aaa" }, grid: { color: "rgba(255,255,255,0.05)" } }
+        }
+      }
+    });
+
+    const patternChart = new Chart(patternCtx, {
+      type: "line",
+      data: patternData,
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: "#fff" } } },
+        scales: {
+          x: { ticks: { color: "#aaa" }, grid: { color: "rgba(255,255,255,0.05)" } },
+          y: { min: 0, max: 9, ticks: { color: "#aaa", stepSize: 1 }, grid: { color: "rgba(255,255,255,0.05)" } }
+        }
+      }
+    });
+
+    // ===== ANALYSIS ENGINE =====
+    let running        = false;
+    let analysisTimer  = null;
+    let countdownTimer = null;
+    let digitHistory   = [];
+    const freqCount    = Array(10).fill(0);
+    let tickCount      = 0;
+
+    const toggleBtn     = document.getElementById("toggleBtn");
+    const livePriceEl   = document.getElementById("livePrice");
+    const lastDigitEl   = document.getElementById("lastDigit");
+    const predictedEl   = document.getElementById("predictedDigit");
+    const countdownEl   = document.getElementById("countdown");
+    const countdownNote = document.getElementById("countdownNote");
+    const loader        = document.getElementById("loader");
+
+    function randomPrice() {
+      return (Math.random() * 500 + 100).toFixed(4);
+    }
+
+    function getLastDigit(price) {
+      const s = price.toString().replace(".", "");
+      return parseInt(s[s.length - 1]);
+    }
+
+    function updateCharts(digit) {
+      freqCount[digit]++;
+      freqChart.data.datasets[0].data = [...freqCount];
+      freqChart.update("none");
+
+      tickCount++;
+      patternData.labels.push(tickCount);
+      patternData.datasets[0].data.push(digit);
+      if (patternData.labels.length > 30) {
+        patternData.labels.shift();
+        patternData.datasets[0].data.shift();
+      }
+      patternChart.update("none");
+    }
+
+    function computeSignal(type) {
+      const last20 = digitHistory.slice(-20);
+      if (last20.length < 5) return null;
+
+      if (type === "overunder") {
+        const over  = last20.filter(d => d >= 5).length;
+        const under = last20.filter(d => d <= 4).length;
+        const pct   = Math.round((Math.max(over, under) / last20.length) * 100);
+        if (over > under) return { signal: "OVER",  pct, cls: over >= 14 ? "signal-good" : "signal-warn" };
+        if (under > over) return { signal: "UNDER", pct, cls: under >= 14 ? "signal-good" : "signal-warn" };
+        return { signal: "NEUTRAL", pct: 50, cls: "signal-warn" };
+      }
+
+      if (type === "evenodd") {
+        const evens = last20.filter(d => d % 2 === 0).length;
+        const odds  = last20.filter(d => d % 2 !== 0).length;
+        const pct   = Math.round((Math.max(evens, odds) / last20.length) * 100);
+        if (evens > odds) return { signal: "EVEN", pct, cls: evens >= 14 ? "signal-good" : "signal-warn" };
+        if (odds > evens) return { signal: "ODD",  pct, cls: odds  >= 14 ? "signal-good" : "signal-warn" };
+        return { signal: "NEUTRAL", pct: 50, cls: "signal-warn" };
+      }
+    }
+
+    function renderSignal(elId, result, label) {
+      const el = document.getElementById(elId);
+      el.className = "signal-box " + (result ? result.cls : "");
+      el.innerHTML = result
+        ? `<span class="signal-title">${label}</span>
+           <span class="signal-main">${result.signal}</span>
+           <span class="signal-meta">Confidence: ${result.pct}%</span>`
+        : "";
+    }
+
+    function predictMatchDiffers() {
+      if (digitHistory.length < 5) return "–";
+      const freq = Array(10).fill(0);
+      digitHistory.slice(-30).forEach(d => freq[d]++);
+      return freq.indexOf(Math.max(...freq));
+    }
+
+    function runTick() {
+      const price = randomPrice();
+      const digit = getLastDigit(price);
+      digitHistory.push(digit);
+      if (digitHistory.length > 100) digitHistory.shift();
+
+      livePriceEl.textContent  = price;
+      lastDigitEl.textContent  = digit;
+      predictedEl.textContent  = predictMatchDiffers();
+
+      updateCharts(digit);
+    }
+
+    function startCountdown() {
+      let secs = 10;
+      countdownEl.textContent = secs;
+      countdownNote.style.display = "block";
+      clearInterval(countdownTimer);
+      countdownTimer = setInterval(() => {
+        secs--;
+        countdownEl.textContent = secs;
+        if (secs <= 0) {
+          clearInterval(countdownTimer);
+          countdownNote.style.display = "none";
+        }
+      }, 1000);
+    }
+
+    function startAnalysis() {
+      loader.style.display = "flex";
+      setTimeout(() => {
+        loader.style.display = "none";
+        running = true;
+        toggleBtn.textContent = "Stop Analysis";
+        toggleBtn.style.background = "linear-gradient(to right, #555, #333)";
+        runTick();
+        analysisTimer = setInterval(() => {
+          runTick();
+          startCountdown();
+        }, 10000);
+      }, 1200);
+    }
+
+    function stopAnalysis() {
+      running = false;
+      clearInterval(analysisTimer);
+      clearInterval(countdownTimer);
+      countdownNote.style.display = "none";
+      toggleBtn.textContent = "Start Analysis";
+      toggleBtn.style.background = "linear-gradient(to right, orange, red)";
+    }
+
+    toggleBtn.addEventListener("click", () => running ? stopAnalysis() : startAnalysis());
+
+    // ===== SIGNAL BUTTONS =====
+    document.getElementById("overUnderBtn").addEventListener("click", () => {
+      renderSignal("overunderSignal", computeSignal("overunder"), "Over / Under Signal");
+    });
+    document.getElementById("evenOddBtn").addEventListener("click", () => {
+      renderSignal("evenoddSignal", computeSignal("evenodd"), "Even / Odd Signal");
+    });
+    document.getElementById("matchesBtn").addEventListener("click", () => {
+      document.getElementById("predictedDigit").textContent = running ? predictMatchDiffers() : "–";
+    });
+    document.getElementById("differsBtn").addEventListener("click", () => {
+      document.getElementById("predictedDigit").textContent = running ? predictMatchDiffers() : "–";
+    });
+  </script>
+</body>
+</html>
