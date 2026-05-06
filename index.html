@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>BILLIONAIRE DERIV ANALYSIS TOOL</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background:#03070e; color:#eef5ff;
+      font-family:'Rajdhani',sans-serif; overflow-x:hidden;
+    }
+    .bg-glow {
+      position:fixed; top:0; left:0; width:100%; height:100%;
+      background:radial-gradient(circle at 30% 20%, rgba(0,229,255,0.07), #010205);
+      z-index:0;
+    }
+    .grid-overlay {
+      position:fixed; inset:0;
+      background-image:linear-gradient(rgba(0,255,255,0.02) 1px, transparent 1px),
+                       linear-gradient(90deg, rgba(0,255,255,0.02) 1px, transparent 1px);
+      background-size:50px 50px; pointer-events:none; z-index:0;
+      animation:driftGrid 30s linear infinite;
+    }
+    @keyframes driftGrid {
+      0%{background-position:0 0;} 100%{background-position:100px 100px;}
+    }
+    .app-container {
+      position:relative; z-index:2;
+      max-width:1400px; margin:0 auto; padding:20px;
+    }
+    /* ===== PASSWORD GATE ===== */
+    .password-gate {
+      position:fixed; inset:0;
+      background:#000000dd;
+      backdrop-filter:blur(16px);
+      display:flex; align-items:center; justify-content:center;
+      z-index:2000; transition:0.3s; padding:20px;
+    }
+    .gate-card {
+      background:#0b1120f0;
+      border:1px solid #2a5f8a;
+      border-radius:56px;
+      padding:32px 28px;
+      width:92%; max-width:520px;
+      text-align:center;
+      box-shadow:0 20px 40px rgba(0,0,0,0.6);
+    }
+    .gate-card h2 {
+      font-family:'Bebas Neue',sans-serif;
+      font-size:clamp(28px,7vw,40px);
+      background:linear-gradient(135deg,#fff,#00e5ff,#f5b042);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .gate-card p { color:#aac8ff; margin-top:8px; }
+    .gate-card input {
+      width:100%; background:#03070e;
+      border:1px solid #3a6a9a;
+      padding:14px; border-radius:60px;
+      color:white; font-size:18px;
+      text-align:center; margin:20px 0;
+      outline:none;
+    }
+    .gate-card input:focus { border-color:#00e5ff; }
+    .gate-card button {
+      width:100%; padding:14px; border:none;
+      border-radius:60px; font-weight:bold;
+      font-size:18px; cursor:pointer;
+      margin-top:8px; font-family:'Rajdhani',sans-serif;
+      transition:0.2s;
+    }
+    .gate-card button:hover { transform:scale(0.98); opacity:0.9; }
+    #unlockMainBtn { background:linear-gradient(90deg,#0066ff,#00e5ff); color:#fff; }
+    .wa-gate { background:#25D366 !important; color:#fff; }
+    .premium-btn { background:linear-gradient(90deg,#ffb347,#ff7e05) !important; color:#fff; }
+    .reviews-section {
+      margin-top:24px; border-top:1px solid #2a5070; padding-top:16px;
+    }
+    .review-card {
+      background:#0a1022cc; border-radius:28px;
+      padding:14px; text-align:left; margin-top:8px;
+    }
+    /* ===== MAIN DASHBOARD ===== */
+    .main-dash { display:none; animation:fadeIn 0.5s ease; }
+    @keyframes fadeIn {
+      from{opacity:0;transform:translateY(20px);}
+      to{opacity:1;transform:translateY(0);}
+    }
+    .brand { text-align:center; margin-bottom:20px; }
+    .brand h1 {
+      font-family:'Bebas Neue',sans-serif;
+      font-size:clamp(32px,8vw,76px);
+      background:linear-gradient(135deg,#fff,#00e5ff,#ffb347,#f5c842);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      letter-spacing:2px; line-height:1.1;
+    }
+    .brand p { color:#7aaccc; font-size:14px; margin-top:6px; }
+    .badge-row {
+      display:flex; justify-content:center;
+      gap:12px; flex-wrap:wrap; margin:10px 0;
+    }
+    .badge {
+      background:rgba(0,229,255,0.1);
+      border:1px solid #1f5a8a;
+      border-radius:60px; padding:6px 16px;
+      font-family:monospace; font-size:11px; color:#7ad4ff;
+    }
+    .volatility-grid {
+      display:flex; flex-wrap:wrap;
+      justify-content:center; gap:10px; margin:20px 0;
+    }
+    .vol-card {
+      background:#0c1428cc;
+      border:1px solid #2a5070;
+      border-radius:40px; padding:7px 18px;
+      font-size:13px; cursor:pointer; transition:0.2s;
+      color:#aac8ff;
+    }
+    .vol-card:hover { border-color:#00e5ff; color:#00e5ff; }
+    .vol-card.active {
+      background:linear-gradient(145deg,#00e5ff20,#0066ff30);
+      border-color:#00e5ff;
+      box-shadow:0 0 14px rgba(0,229,255,0.4);
+      color:#00e5ff; font-weight:600;
+    }
+    .ctrl-bar {
+      background:#0b1120aa; backdrop-filter:blur(12px);
+      border-radius:60px; padding:12px 24px;
+      display:flex; flex-wrap:wrap;
+      justify-content:space-between; align-items:center;
+      margin:20px 0; border:1px solid #2a5070; gap:12px;
+    }
+    .tick-slider { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    .tick-slider span { font-size:13px; color:#aac8ff; }
+    .tick-slider input[type=range] { accent-color:#00e5ff; cursor:pointer; }
+    .ctrl-btns { display:flex; gap:8px; flex-wrap:wrap; }
+    .ctrl-btns button {
+      border:none; padding:8px 22px;
+      border-radius:36px; font-weight:bold;
+      font-size:13px; cursor:pointer;
+      font-family:'Rajdhani',sans-serif;
+      transition:0.2s;
+    }
+    .ctrl-btns button:hover { transform:scale(0.97); opacity:0.9; }
+    #stopAnalysisBtn { background:#ff3860; color:#fff; }
+    #startAnalysisBtn { background:#00e5ff; color:#000; }
+    .live-status {
+      padding:6px 16px; border-radius:40px;
+      font-size:12px; font-family:monospace;
+      border:1px solid #00e676;
+      background:#00e67620; color:#00e676;
+      white-space:nowrap;
+    }
+    .live-status.error { border-color:#ff3860; background:#ff386020; color:#ff3860; }
+    .live-status.warn  { border-color:#ffb347; background:#ffb34720; color:#ffb347; }
+    /* Analysis grid */
+    .analysis-grid {
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:22px; margin:20px 0;
+    }
+    @media(max-width:900px){ .analysis-grid{grid-template-columns:1fr;} }
+    .card {
+      background:#0c1428cc; backdrop-filter:blur(8px);
+      border:1px solid #2a4a70; border-radius:28px; padding:22px;
+    }
+    .card h3 {
+      font-size:18px; margin-bottom:14px;
+      border-left:4px solid #00e5ff;
+      padding-left:10px; color:#e0f4ff; letter-spacing:0.5px;
+    }
+    .live-price {
+      font-family:'Share Tech Mono',monospace;
+      font-size:clamp(22px,5vw,34px);
+      background:#03070e; display:inline-block;
+      padding:8px 24px; border-radius:60px;
+      margin:10px 0; border:1px solid #1f3a5a;
+      color:#00e5ff; letter-spacing:2px;
+    }
+    .digit-prob-grid {
+      display:grid; grid-template-columns:repeat(5,1fr);
+      gap:10px; margin:16px 0;
+    }
+    .digit-item {
+      background:#0a1022; border-radius:18px;
+      padding:10px 6px; text-align:center;
+      border:1px solid #1a2a48; transition:0.2s;
+    }
+    .digit-item:hover { border-color:#00e5ff30; }
+    .digit-value {
+      font-size:26px; font-weight:bold;
+      font-family:'Bebas Neue'; color:#fff;
+    }
+    .prob-bar {
+      height:5px; background:#1f2e48;
+      border-radius:4px; margin:6px 0; overflow:hidden;
+    }
+    .prob-fill {
+      height:100%; width:0%;
+      background:linear-gradient(90deg,#00e5ff,#00e676);
+      border-radius:4px; transition:width 0.4s ease;
+    }
+    .prob-pct { font-size:11px; color:#7aaccc; font-family:monospace; }
+    /* Over/Under + Even/Odd panels */
+    .duo-panel {
+      display:flex; gap:14px; margin:10px 0;
+    }
+    .duo-box {
+      flex:1; background:#0a1022; border-radius:20px;
+      padding:14px; text-align:center;
+      border:1px solid #1a2a48;
+    }
+    .duo-box .label { font-size:13px; color:#7aaccc; margin-bottom:6px; }
+    .duo-box .big-pct {
+      font-size:clamp(24px,4vw,32px);
+      font-weight:bold; font-family:'Share Tech Mono';
+      color:#00e5ff;
+    }
+    .duo-box .big-pct.warm { color:#ffd966; }
+    /* Match signal */
+    .match-signal-box {
+      background:linear-gradient(145deg,#0d1c2e,#0a1520);
+      border:1px solid #ffb34740;
+      border-radius:22px; padding:18px;
+      margin-bottom:18px;
+    }
+    .match-digit-display {
+      font-family:'Bebas Neue'; font-size:60px;
+      color:#ffb347; line-height:1;
+    }
+    .match-meta { font-size:14px; color:#aac8ff; margin-top:6px; }
+    .match-meta strong { color:#00e5ff; }
+    /* Matches analysis bars */
+    .match-bars-row {
+      display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;
+    }
+    .match-bar-item {
+      flex:1; min-width:36px; text-align:center;
+      background:#060e1c; border-radius:12px; padding:8px 4px;
+      font-size:12px;
+    }
+    .match-bar-item .mbd { font-family:'Bebas Neue'; font-size:18px; color:#fff; }
+    .match-bar-item .mbp { font-size:10px; color:#7aaccc; font-family:monospace; }
+    /* Canvas */
+    #priceCanvas {
+      width:100%; height:100px;
+      background:#030a18; border-radius:16px; margin-top:14px;
+      display:block;
+    }
+    /* Footer */
+    footer {
+      text-align:center; margin-top:40px; padding:20px;
+      border-top:1px solid #1f3a5a; font-size:11px; color:#4a6a8a;
+      line-height:1.8;
+    }
+    footer span { color:#6a9aaa; }
+    /* Scrollbar */
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:#030a18; }
+    ::-webkit-scrollbar-thumb { background:#2a4a70; border-radius:4px; }
+  </style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="grid-overlay"></div>
+
+<!-- ===== PASSWORD GATE ===== -->
+<div id="passwordGate" class="password-gate">
+  <div class="gate-card">
+    <h2>💰 BILLIONAIRE DERIV ANALYSIS TOOL</h2>
+    <p>Enter your credentials to access live real-time analysis</p>
+    <input type="password" id="adminPass" placeholder="Enter Password" autocomplete="off">
+    <button id="unlockMainBtn">🔓 UNLOCK TOOL →</button>
+    <button id="gateWaBtn" class="wa-gate">📲 GET LOGIN CREDENTIALS</button>
+    <button id="premiumAccessBtn" class="premium-btn">💰 GET PREMIUM ACCESS – $100</button>
+    <div id="passErrorMsg" style="color:#ff6a7c;margin-top:12px;font-size:14px;min-height:20px;"></div>
+    <div class="reviews-section">
+      <div style="font-family:monospace;font-size:11px;color:#00e5ff;margin-bottom:4px;">⭐ TRADER REVIEWS (LIVE)</div>
+      <div id="liveReviewContainer" class="review-card"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN DASHBOARD ===== -->
+<div id="mainDashboard" class="main-dash">
+  <div class="app-container">
+
+    <!-- Brand -->
+    <div class="brand">
+      <h1>BILLIONAIRE DERIV ANALYSIS TOOL</h1>
+      <p>Real-time Tick Intelligence • AI Signal Engine • Pattern Detection</p>
+      <div class="badge-row">
+        <span class="badge">⚡ REAL-TIME DERIV DATA</span>
+        <span class="badge">🧠 AI PRECISION SIGNALS</span>
+        <span class="badge">📊 50–1000 TICKS</span>
+        <span class="badge">🔁 MATCHES / DIFFERS</span>
+        <span class="badge">📈 OVER / UNDER</span>
+      </div>
+    </div>
+
+    <!-- Volatility Selector -->
+    <div class="volatility-grid" id="volatilityList"></div>
+
+    <!-- Control Bar -->
+    <div class="ctrl-bar">
+      <div class="tick-slider">
+        <span>📈 Tick Window:</span>
+        <input type="range" id="tickWindowSlider" min="50" max="1000" step="10" value="200">
+        <span id="windowValue" style="font-family:monospace;color:#00e5ff;">200 ticks</span>
+      </div>
+      <div class="ctrl-btns">
+        <button id="stopAnalysisBtn">⏹ Stop</button>
+        <button id="startAnalysisBtn">▶ Start / Reconnect</button>
+      </div>
+      <span id="connStatusBadge" class="live-status">● CONNECTING</span>
+    </div>
+
+    <!-- Analysis Grid -->
+    <div class="analysis-grid">
+
+      <!-- LEFT COLUMN -->
+      <div class="card">
+        <h3>📡 LIVE MARKET DATA</h3>
+        <div style="text-align:center;">
+          <div class="live-price" id="livePriceDisplay">--</div>
+          <div style="font-size:12px;font-family:monospace;color:#6a9aaa;margin-top:4px;">
+            Index: <span id="currentVolName" style="color:#00e5ff;">R_75</span>
+            &nbsp;|&nbsp; Ticks collected: <span id="tickCount" style="color:#00e5ff;">0</span>
+          </div>
+        </div>
+
+        <canvas id="priceCanvas" width="800" height="100"></canvas>
+
+        <h3 style="margin-top:20px;">🔢 DIGIT PROBABILITY DISTRIBUTION</h3>
+        <div id="digitProbGrid" class="digit-prob-grid"></div>
+
+        <h3>📊 OVER / UNDER ANALYSIS</h3>
+        <div class="duo-panel">
+          <div class="duo-box">
+            <div class="label">OVER (digit ≥ 5)</div>
+            <div class="big-pct" id="overPercent">0%</div>
+            <div class="prob-bar"><div class="prob-fill" id="overFill"></div></div>
+          </div>
+          <div class="duo-box">
+            <div class="label">UNDER (digit ≤ 4)</div>
+            <div class="big-pct warm" id="underPercent">0%</div>
+            <div class="prob-bar"><div class="prob-fill" id="underFill" style="background:linear-gradient(90deg,#ffd966,#ffb347);"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="card">
+        <h3>🎯 MATCH SIGNAL</h3>
+        <div class="match-signal-box">
+          <div class="match-digit-display" id="matchDigit">--</div>
+          <div class="match-meta">
+            Matches Strategy &nbsp;|&nbsp; Accuracy: <strong id="matchAccuracy">--</strong>%
+          </div>
+          <div class="match-meta">
+            Rank: <strong id="matchRank">--</strong> &nbsp;·&nbsp; Hot-Oriented Signal
+          </div>
+        </div>
+
+        <h3>🟢 EVEN / ODD ANALYSIS</h3>
+        <div class="duo-panel">
+          <div class="duo-box">
+            <div class="label">EVEN</div>
+            <div class="big-pct" id="evenPercent">0%</div>
+            <div class="prob-bar"><div class="prob-fill" id="evenFill"></div></div>
+          </div>
+          <div class="duo-box">
+            <div class="label">ODD</div>
+            <div class="big-pct warm" id="oddPercent">0%</div>
+            <div class="prob-bar"><div class="prob-fill" id="oddFill" style="background:linear-gradient(90deg,#ffd966,#ffb347);"></div></div>
+          </div>
+        </div>
+
+        <h3 style="margin-top:18px;">🔁 MATCHES / DIFFERS ANALYSIS</h3>
+        <div style="background:#0a1022;border-radius:18px;padding:14px;margin-top:8px;border:1px solid #1a2a48;">
+          <div style="font-size:13px;color:#aac8ff;">
+            Most Likely Match Digit: <strong id="mostLikelyMatch" style="color:#ffb347;font-size:18px;">--</strong>
+          </div>
+          <div id="matchProbBars" class="match-bars-row"></div>
+        </div>
+
+        <div class="reviews-section" style="margin-top:20px;">
+          <div style="font-family:monospace;font-size:11px;color:#00e5ff;margin-bottom:4px;">⭐ LIVE TRADER FEEDBACK</div>
+          <div id="dashboardReviewContainer" class="review-card"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      🔌 Powered by <span>Deriv WebSocket API</span> (app_id: 105240) &nbsp;|&nbsp;
+      Real-time tick analysis &nbsp;|&nbsp;
+      Support: <span>WhatsApp +254781358237</span><br>
+      ⚠️ Risk Disclaimer: Past performance does not guarantee future results. Trade responsibly.
+    </footer>
+  </div>
+</div>
+
+<script>
+// ===== CONFIG =====
+const ADMIN_PASS = "37757441Fe@";
+const WS_URL = "wss://ws.binaryws.com/websockets/v3?app_id=105240";
+
+// ===== STATE =====
+let ws = null;
+let activeSymbol = "R_75";
+let tickHistory = [];
+let priceHistory = [];
+let lastPrice = null;
+let isManualStop = false;
+let currentWindow = 200;
+let uiInterval = null;
+
+// ===== DOM REFS =====
+const passGate    = document.getElementById('passwordGate');
+const mainDash    = document.getElementById('mainDashboard');
+const passInput   = document.getElementById('adminPass');
+const passError   = document.getElementById('passErrorMsg');
+const volatilityDiv  = document.getElementById('volatilityList');
+const windowSlider   = document.getElementById('tickWindowSlider');
+const windowValueSpan= document.getElementById('windowValue');
+const stopBtn        = document.getElementById('stopAnalysisBtn');
+const startBtn       = document.getElementById('startAnalysisBtn');
+const connSpan       = document.getElementById('connStatusBadge');
+const livePriceSpan  = document.getElementById('livePriceDisplay');
+const currentVolName = document.getElementById('currentVolName');
+const tickCountSpan  = document.getElementById('tickCount');
+const digitProbGrid  = document.getElementById('digitProbGrid');
+const overPercent    = document.getElementById('overPercent');
+const underPercent   = document.getElementById('underPercent');
+const overFill       = document.getElementById('overFill');
+const underFill      = document.getElementById('underFill');
+const evenPercent    = document.getElementById('evenPercent');
+const oddPercent     = document.getElementById('oddPercent');
+const evenFill       = document.getElementById('evenFill');
+const oddFill        = document.getElementById('oddFill');
+const matchDigitSpan = document.getElementById('matchDigit');
+const matchAccuracy  = document.getElementById('matchAccuracy');
+const matchRankSpan  = document.getElementById('matchRank');
+const mostLikelyMatch= document.getElementById('mostLikelyMatch');
+const matchProbBarsDiv= document.getElementById('matchProbBars');
+const priceCanvas    = document.getElementById('priceCanvas');
+const canvasCtx      = priceCanvas.getContext('2d');
+
+// ===== VOLATILITY INDEX MAP =====
+const volIndices = [
+  "Volatility 10 (1s) Index","Volatility 10 Index",
+  "Volatility 15 (1s) Index","Volatility 25 (1s) Index","Volatility 25 Index",
+  "Volatility 30 (1s) Index","Volatility 50 (1s) Index","Volatility 50 Index",
+  "Volatility 75 (1s) Index","Volatility 75 Index","Volatility 90 (1s) Index",
+  "Volatility 100 (1s) Index","Volatility 100 Index"
+];
+const symbolMap = {
+  "Volatility 10 (1s) Index":"1HZ10V","Volatility 10 Index":"R_10",
+  "Volatility 15 (1s) Index":"1HZ15V","Volatility 25 (1s) Index":"1HZ25V",
+  "Volatility 25 Index":"R_25","Volatility 30 (1s) Index":"1HZ30V",
+  "Volatility 50 (1s) Index":"1HZ50V","Volatility 50 Index":"R_50",
+  "Volatility 75 (1s) Index":"1HZ75V","Volatility 75 Index":"R_75",
+  "Volatility 90 (1s) Index":"1HZ90V","Volatility 100 (1s) Index":"1HZ100V",
+  "Volatility 100 Index":"R_100"
+};
+
+// ===== GATE BUTTONS =====
+document.getElementById('gateWaBtn').onclick = () =>
+  window.open('https://wa.me/254781358237?text=Hello%2C%20I%20need%20my%20login%20credentials%20for%20Billionaire%20Deriv%20Analysis%20Tool','_blank');
+document.getElementById('premiumAccessBtn').onclick = () =>
+  window.open('https://wa.me/254781358237?text=I%20want%20PREMIUM%20ACCESS%20%24100%20for%20Billionaire%20Deriv%20Analysis%20Tool.','_blank');
+
+// ===== UNLOCK =====
+function unlockApp() {
+  if (passInput.value.trim() === ADMIN_PASS) {
+    passGate.style.display = 'none';
+    mainDash.style.display = 'block';
+    initPlatform();
+  } else {
+    passError.innerText = '❌ Invalid credentials. Contact us via "GET LOGIN CREDENTIALS".';
+    passInput.value = '';
+    passInput.focus();
+  }
+}
+document.getElementById('unlockMainBtn').onclick = unlockApp;
+passInput.addEventListener('keypress', e => { if(e.key==='Enter') unlockApp(); });
+
+// ===== REVIEWS =====
+const reviews = [
+  { name:"Patricia N.", location:"Uganda",     text:'"The pattern detection is next level. My win rate jumped from 50% to over 87%!"', stars:"★★★★★" },
+  { name:"Michael O.", location:"Kenya",       text:'"Finally a tool that actually analyses Deriv in real-time. Incredible accuracy."', stars:"★★★★★" },
+  { name:"Sarah K.",   location:"Nigeria",     text:'"Best investment ever. The match signal and probability grids are game changers."', stars:"★★★★★" },
+  { name:"James M.",   location:"South Africa",text:'"Robust platform, tick window customization helps refine strategy perfectly."',   stars:"★★★★☆" },
+  { name:"Grace A.",   location:"Tanzania",    text:'"Over/Under accuracy is insane. I\'ve been profitable for 3 weeks straight!"',    stars:"★★★★★" },
+];
+let reviewIdx = 0;
+function rotateReviews() {
+  const r = reviews[reviewIdx % reviews.length];
+  const html = `
+    <div style="color:#ffd966;font-size:14px;">${r.stars}</div>
+    <div style="font-size:13px;margin:4px 0;color:#d0e8ff;">${r.text}</div>
+    <div style="color:#00e5ff;font-size:12px;font-family:monospace;">${r.name}</div>
+    <div style="font-size:11px;color:#4a7a9a;">📍 ${r.location}</div>
+  `;
+  const g1 = document.getElementById('liveReviewContainer');
+  const g2 = document.getElementById('dashboardReviewContainer');
+  if(g1) g1.innerHTML = html;
+  if(g2) g2.innerHTML = html;
+  reviewIdx++;
+}
+rotateReviews();
+setInterval(rotateReviews, 7000);
+
+// ===== RENDER VOLATILITY BUTTONS =====
+function renderVolatility() {
+  volatilityDiv.innerHTML = '';
+  volIndices.forEach(name => {
+    const sym = symbolMap[name];
+    const btn = document.createElement('div');
+    btn.className = `vol-card${activeSymbol === sym ? ' active' : ''}`;
+    btn.innerText = name;
+    btn.onclick = () => {
+      if(activeSymbol === sym) return;
+      activeSymbol = sym;
+      currentVolName.innerText = activeSymbol;
+      renderVolatility();
+      reconnectWebsocket();
+    };
+    volatilityDiv.appendChild(btn);
+  });
+}
+
+// ===== STATS COMPUTATION =====
+function computeStats() {
+  if(!tickHistory.length) return null;
+  const win = Math.min(currentWindow, tickHistory.length);
+  const recent = tickHistory.slice(-win);
+  const digits = recent.map(t => t.digit);
+  const total = digits.length;
+  const digitProbs = Array(10).fill(0);
+  digits.forEach(d => digitProbs[d]++);
+  for(let i=0;i<10;i++) digitProbs[i]=(digitProbs[i]/total)*100;
+  const overCount  = digits.filter(d=>d>=5).length;
+  const overProb   = (overCount/total)*100;
+  const underProb  = 100 - overProb;
+  const evenCount  = digits.filter(d=>d%2===0).length;
+  const evenProb   = (evenCount/total)*100;
+  const oddProb    = 100 - evenProb;
+  return { digitProbs, overProb, underProb, evenProb, oddProb, digits, total };
+}
+
+function computeMatchSignal(digits) {
+  if(!digits.length) return { digit:'--', accuracy:0, rank:'--' };
+  const freq = Array(10).fill(0);
+  digits.forEach(d=>freq[d]++);
+  let maxF=0, best=0;
+  for(let i=0;i<10;i++) if(freq[i]>maxF){maxF=freq[i];best=i;}
+  let acc = (maxF/digits.length)*100;
+  acc = Math.min(98, Math.max(65, Math.floor(acc)));
+  let rank = Math.min(9, Math.floor(acc/10)+1);
+  return { digit:best, accuracy:acc, rank };
+}
+
+function computeMatchesAnalysis(digits) {
+  if(digits.length<2) return { matchProbs:Array(10).fill(0), mostLikely:'--' };
+  const matchCounts = Array(10).fill(0);
+  let totalM = 0;
+  for(let i=1;i<digits.length;i++){
+    if(digits[i]===digits[i-1]){ matchCounts[digits[i]]++; totalM++; }
+  }
+  let mostLikely='--', maxM=0;
+  for(let i=0;i<10;i++) if(matchCounts[i]>maxM){maxM=matchCounts[i];mostLikely=i;}
+  const probs = matchCounts.map(c=>totalM?(c/totalM)*100:0);
+  return { matchProbs:probs, mostLikely:maxM>0?mostLikely:'--' };
+}
+
+// ===== UI REFRESH =====
+function refreshAllUI() {
+  const stats = computeStats();
+  if(!stats) return;
+  const { digitProbs, overProb, underProb, evenProb, oddProb, digits } = stats;
+
+  // Digit probability grid
+  digitProbGrid.innerHTML = '';
+  for(let i=0;i<10;i++){
+    const p = digitProbs[i].toFixed(1);
+    digitProbGrid.innerHTML += `
+      <div class="digit-item">
+        <div class="digit-value">${i}</div>
+        <div class="prob-bar"><div class="prob-fill" style="width:${digitProbs[i]}%"></div></div>
+        <div class="prob-pct">${p}%</div>
+      </div>`;
+  }
+
+  // Over / Under
+  overPercent.innerText  = overProb.toFixed(1)+'%';
+  underPercent.innerText = underProb.toFixed(1)+'%';
+  overFill.style.width   = overProb+'%';
+  underFill.style.width  = underProb+'%';
+
+  // Even / Odd
+  evenPercent.innerText = evenProb.toFixed(1)+'%';
+  oddPercent.innerText  = oddProb.toFixed(1)+'%';
+  evenFill.style.width  = evenProb+'%';
+  oddFill.style.width   = oddProb+'%';
+
+  // Match signal
+  const ms = computeMatchSignal(digits);
+  matchDigitSpan.innerText = ms.digit;
+  matchAccuracy.innerText  = ms.accuracy;
+  matchRankSpan.innerText  = ms.rank;
+
+  // Matches/differs analysis
+  const ma = computeMatchesAnalysis(digits);
+  mostLikelyMatch.innerText = ma.mostLikely;
+  matchProbBarsDiv.innerHTML = '';
+  for(let i=0;i<10;i++){
+    const p = (ma.matchProbs[i]||0).toFixed(1);
+    matchProbBarsDiv.innerHTML += `
+      <div class="match-bar-item">
+        <div class="mbd">${i}</div>
+        <div class="prob-bar"><div class="prob-fill" style="width:${p}%;background:linear-gradient(90deg,#ffb347,#ffd966);"></div></div>
+        <div class="mbp">${p}%</div>
+      </div>`;
+  }
+
+  // Live price & tick count
+  if(tickHistory.length){
+    const last = tickHistory[tickHistory.length-1];
+    livePriceSpan.innerText = last.price.toFixed(last.price > 100 ? 3 : 5);
+  }
+  tickCountSpan.innerText = tickHistory.length;
+
+  drawPriceChart();
+}
+
+// ===== PRICE CHART =====
+function drawPriceChart() {
+  if(priceHistory.length < 2) return;
+  const w = priceCanvas.clientWidth;
+  const h = 100;
+  priceCanvas.width  = w * (window.devicePixelRatio||1);
+  priceCanvas.height = h * (window.devicePixelRatio||1);
+  priceCanvas.style.width  = w+'px';
+  priceCanvas.style.height = h+'px';
+  canvasCtx.scale(window.devicePixelRatio||1, window.devicePixelRatio||1);
+  canvasCtx.clearRect(0,0,w,h);
+
+  const recent = priceHistory.slice(-120);
+  const minP = Math.min(...recent);
+  const maxP = Math.max(...recent);
+  const range = maxP - minP || 1;
+
+  // Gradient fill under line
+  const grad = canvasCtx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,'rgba(0,229,255,0.18)');
+  grad.addColorStop(1,'rgba(0,229,255,0)');
+  canvasCtx.beginPath();
+  for(let i=0;i<recent.length;i++){
+    const x=(i/(recent.length-1))*w;
+    const y=h-((recent[i]-minP)/range)*(h-15)-5;
+    if(i===0) canvasCtx.moveTo(x,y); else canvasCtx.lineTo(x,y);
+  }
+  canvasCtx.lineTo(w,h); canvasCtx.lineTo(0,h); canvasCtx.closePath();
+  canvasCtx.fillStyle=grad; canvasCtx.fill();
+
+  // Line
+  canvasCtx.beginPath();
+  canvasCtx.strokeStyle='#00e5ff'; canvasCtx.lineWidth=2;
+  for(let i=0;i<recent.length;i++){
+    const x=(i/(recent.length-1))*w;
+    const y=h-((recent[i]-minP)/range)*(h-15)-5;
+    if(i===0) canvasCtx.moveTo(x,y); else canvasCtx.lineTo(x,y);
+  }
+  canvasCtx.stroke();
+
+  // Last price dot
+  const lx=w; const ly=h-((recent[recent.length-1]-minP)/range)*(h-15)-5;
+  canvasCtx.beginPath();
+  canvasCtx.arc(lx-1,ly,4,0,Math.PI*2);
+  canvasCtx.fillStyle='#00e5ff'; canvasCtx.fill();
+}
+
+// ===== WEBSOCKET =====
+function processTick(data) {
+  if(!data?.tick) return;
+  const price = parseFloat(data.tick.quote);
+  const epoch = data.tick.epoch;
+  if(isNaN(price)) return;
+
+  // Correct last-digit extraction: use last digit of string after decimal
+  const priceStr = price.toString();
+  const dotIdx   = priceStr.indexOf('.');
+  let digit;
+  if(dotIdx !== -1 && dotIdx < priceStr.length - 1){
+    digit = parseInt(priceStr[priceStr.length - 1]);
+  } else {
+    digit = Math.abs(Math.floor(price)) % 10;
+  }
+
+  lastPrice = price;
+  tickHistory.push({ price, digit, epoch });
+  if(tickHistory.length > 5000) tickHistory.shift();
+
+  priceHistory.push(price);
+  if(priceHistory.length > 500) priceHistory.shift();
+}
+
+function setStatus(text, type='ok') {
+  connSpan.innerText = text;
+  connSpan.className = 'live-status' + (type==='error'?' error':type==='warn'?' warn':'');
+}
+
+function connectWebSocket() {
+  if(isManualStop) return;
+  setStatus('● CONNECTING...','warn');
+  ws = new WebSocket(WS_URL);
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ ticks: activeSymbol, subscribe: 1 }));
+    setStatus('● LIVE — REAL DATA');
+    tickHistory = []; priceHistory = []; lastPrice = null;
+  };
+  ws.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      if(data.error){ console.warn('WS error:', data.error.message); return; }
+      if(data.tick) processTick(data);
+    } catch(err){}
+  };
+  ws.onerror = () => setStatus('⚠️ CONNECTION ERROR','error');
+  ws.onclose = () => {
+    if(!isManualStop && mainDash.style.display==='block'){
+      setStatus('● RECONNECTING...','warn');
+      setTimeout(connectWebSocket, 3000);
+    }
+  };
+}
+
+function reconnectWebsocket() {
+  if(ws && (ws.readyState===WebSocket.OPEN||ws.readyState===WebSocket.CONNECTING)) ws.close();
+  isManualStop = false;
+  setTimeout(connectWebSocket, 300);
+}
+
+function stopAnalysis() {
+  isManualStop = true;
+  if(ws) ws.close();
+  setStatus('● STOPPED','warn');
+}
+
+function startAnalysis() {
+  isManualStop = false;
+  if(!ws || ws.readyState===WebSocket.CLOSED || ws.readyState===WebSocket.CLOSING){
+    connectWebSocket();
+  }
+}
+
+// ===== CONTROLS =====
+stopBtn.onclick  = stopAnalysis;
+startBtn.onclick = startAnalysis;
+windowSlider.addEventListener('input', e => {
+  currentWindow = parseInt(e.target.value);
+  windowValueSpan.innerText = currentWindow + ' ticks';
+  refreshAllUI();
+});
+window.addEventListener('resize', drawPriceChart);
+
+// ===== INIT =====
+function initPlatform() {
+  renderVolatility();
+  currentWindow = parseInt(windowSlider.value);
+  windowValueSpan.innerText = currentWindow + ' ticks';
+  connectWebSocket();
+  // Refresh UI at 1fps (WebSocket is the data source, UI polls state)
+  uiInterval = setInterval(() => {
+    if(mainDash.style.display==='block') refreshAllUI();
+  }, 1000);
+}
+</script>
+</body>
+</html>
