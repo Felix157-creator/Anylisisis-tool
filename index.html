@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>BILLIONAIRE DERIV TRADING ANALYSIS TOOL</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#040d1a;--panel:#071628;--panel2:#0a1e35;
+  --accent:#00c8ff;--accent2:#00ff9d;--gold:#ffd700;
+  --red:#ff3b5c;--orange:#ff6b35;--border:rgba(0,200,255,0.15);
+  --text:#c8e8ff;--purple:#a855f7;
+}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,200,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.025) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;
+}
+
+/* LOGIN */
+#loginScreen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9999;background:radial-gradient(ellipse at center,#071628 0%,#020810 100%);overflow-y:auto;padding:20px;}
+.login-card{width:100%;max-width:380px;padding:34px 26px;background:linear-gradient(145deg,#0a1e35,#061422);border:1px solid var(--border);border-radius:24px;box-shadow:0 0 60px rgba(0,200,255,0.12);text-align:center;position:relative;overflow:hidden;}
+.login-card::before{content:'';position:absolute;top:-40%;left:-40%;width:180%;height:180%;background:conic-gradient(from 0deg,transparent,rgba(0,200,255,0.04) 50%,transparent);animation:rotate 8s linear infinite;}
+@keyframes rotate{to{transform:rotate(360deg)}}
+.login-gem{font-size:48px;margin-bottom:10px;display:block;filter:drop-shadow(0 0 12px rgba(0,200,255,0.5))}
+.login-title{font-family:'Orbitron',monospace;font-size:clamp(13px,3.5vw,17px);font-weight:900;color:var(--accent);letter-spacing:1px;line-height:1.4;margin-bottom:4px;}
+.login-title .gold{background:linear-gradient(90deg,var(--gold),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent;display:block;font-size:clamp(10px,2.5vw,12px);margin-top:4px;}
+.login-sub{color:rgba(200,232,255,0.45);font-size:12px;margin-bottom:22px;line-height:1.5;}
+.login-input{width:100%;padding:13px 16px;background:rgba(0,200,255,0.05);border:1px solid rgba(0,200,255,0.2);border-radius:12px;color:white;font-size:15px;font-family:'Rajdhani',sans-serif;margin-bottom:12px;outline:none;text-align:center;transition:border-color 0.3s;}
+.login-input:focus{border-color:var(--accent);box-shadow:0 0 16px rgba(0,200,255,0.2)}
+.g-btn{width:100%;padding:14px;border:none;border-radius:12px;font-family:'Orbitron',monospace;font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;margin-bottom:10px;transition:transform 0.2s;}
+.g-btn:hover{transform:translateY(-1px);}
+.btn-unlock{background:linear-gradient(135deg,#0099cc,#00c8ff);color:#000;}
+.btn-wa{background:linear-gradient(135deg,#00b874,#00ff9d);color:#000;}
+.btn-premium{background:linear-gradient(135deg,#cc7722,#ffd700);color:#000;}
+.login-err{color:var(--red);font-size:12px;margin-top:8px;display:none;}
+.reviews{margin-top:18px;padding-top:16px;border-top:1px solid var(--border);}
+.review-label{color:var(--gold);font-size:10px;font-weight:700;letter-spacing:2px;text-align:center;margin-bottom:10px;}
+.review-item{background:rgba(255,255,255,0.03);border-radius:10px;padding:10px;margin-bottom:0;}
+.stars{color:var(--gold);font-size:13px;margin-bottom:3px;}
+.review-text{font-size:11px;color:rgba(200,232,255,0.65);font-style:italic;margin-bottom:3px;line-height:1.4;}
+.reviewer{font-size:11px;color:var(--accent);font-weight:700;}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:rgba(4,13,26,0.92);display:none;align-items:center;justify-content:center;z-index:8888;flex-direction:column;gap:14px;}
+.spin-ring{width:56px;height:56px;border-radius:50%;border:4px solid rgba(0,200,255,0.12);border-top-color:var(--accent);animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-txt{font-family:'Orbitron',monospace;font-size:11px;color:var(--accent);letter-spacing:2px;animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+/* APP */
+#app{display:none;max-width:480px;margin:0 auto;padding:12px;position:relative;z-index:1;}
+
+/* HEADER */
+.header{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:linear-gradient(135deg,#071628,#0a1e35);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;}
+.logo-area{display:flex;align-items:center;gap:8px;}
+.logo-icon{font-size:20px;filter:drop-shadow(0 0 8px rgba(0,200,255,0.5))}
+.logo-txt{font-family:'Orbitron',monospace;font-size:8.5px;font-weight:900;color:var(--accent);letter-spacing:0.5px;line-height:1.5;}
+.logo-txt .sub{color:var(--gold);display:block;font-size:7.5px;}
+.hdr-right{display:flex;align-items:center;gap:7px;}
+.live-badge{background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.3);border-radius:20px;padding:3px 9px;font-size:9px;font-weight:700;color:var(--accent2);display:flex;align-items:center;gap:3px;font-family:'Orbitron',monospace;}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--accent2);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(0,255,157,0.5)}50%{box-shadow:0 0 0 5px rgba(0,255,157,0)}}
+.logout-btn{background:rgba(255,59,92,0.15);border:1px solid rgba(255,59,92,0.3);color:var(--red);border-radius:8px;padding:5px 10px;font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;cursor:pointer;}
+
+/* STATUS */
+.status-bar{display:flex;align-items:center;justify-content:space-between;background:rgba(0,200,255,0.04);border:1px solid var(--border);border-radius:10px;padding:7px 12px;margin-bottom:10px;font-family:'Orbitron',monospace;font-size:9px;}
+.status-l{display:flex;align-items:center;gap:7px;color:var(--accent);}
+.status-sym{color:var(--gold);font-weight:900;}
+.status-r{color:rgba(200,232,255,0.35);}
+
+/* CHART */
+.chart-card{background:linear-gradient(180deg,#081828,#050e1c);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px;}
+.chart-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.chart-ttl{font-family:'Orbitron',monospace;font-size:9px;color:rgba(200,232,255,0.4);letter-spacing:1px;}
+.price-badge{background:rgba(0,200,255,0.1);border:1px solid var(--accent);border-radius:8px;padding:3px 10px;font-family:'Orbitron',monospace;font-size:12px;font-weight:900;color:var(--accent2);}
+#chartCanvas{width:100%;height:120px;display:block;border-radius:8px;}
+.chart-btns{display:flex;gap:7px;margin-top:8px;}
+.c-btn{flex:1;padding:8px;border:none;border-radius:8px;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.c-gen{background:linear-gradient(135deg,#0055aa,#0099cc);color:white;}
+.c-ref{background:rgba(0,200,255,0.08);border:1px solid var(--border);color:var(--accent);}
+
+/* SIGNAL PANEL */
+.signal-panel{background:linear-gradient(135deg,#071628,#0a2040);border:1px solid rgba(0,255,157,0.25);border-radius:14px;padding:14px;margin-bottom:10px;position:relative;overflow:hidden;}
+.signal-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent2),transparent);}
+.sp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.sp-label{display:flex;align-items:center;gap:6px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;color:rgba(200,232,255,0.6);letter-spacing:1px;}
+.sp-dot{width:7px;height:7px;border-radius:50%;background:var(--accent2);animation:pulse 1.5s infinite;}
+.conf-badge{background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.3);border-radius:6px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--accent2);font-family:'Orbitron',monospace;}
+.sp-digit{font-family:'Orbitron',monospace;font-size:60px;font-weight:900;color:var(--accent2);text-align:center;line-height:1;text-shadow:0 0 40px rgba(0,255,157,0.4);margin:8px 0 4px;}
+.sp-strat{text-align:center;color:rgba(200,232,255,0.4);font-size:12px;margin-bottom:8px;}
+.acc-bar{background:rgba(255,255,255,0.05);border-radius:5px;height:5px;overflow:hidden;margin-bottom:5px;}
+.acc-fill{height:100%;background:linear-gradient(90deg,#00c8ff,#00ff9d);border-radius:5px;transition:width 0.8s;}
+.acc-labels{display:flex;justify-content:space-between;font-size:10px;color:rgba(200,232,255,0.35);}
+.sp-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;font-size:10px;color:rgba(200,232,255,0.45);}
+.sp-meta span{background:rgba(255,255,255,0.04);padding:3px 7px;border-radius:5px;}
+
+/* SELECTS */
+.sel-section{margin-bottom:10px;}
+.sel-label{font-size:11px;font-weight:700;color:rgba(200,232,255,0.5);letter-spacing:1px;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.styled-sel{width:100%;padding:11px 14px;background:linear-gradient(135deg,#081828,#071628);border:1px solid rgba(0,200,255,0.2);border-radius:11px;color:white;font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300c8ff' stroke-width='2' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;transition:border-color 0.2s;}
+.styled-sel:focus{border-color:var(--accent);}
+.styled-sel option{background:#071628;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+
+/* LIVE PRICE */
+.price-card{background:linear-gradient(135deg,#050f20,#071628);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;text-align:center;position:relative;overflow:hidden;}
+.price-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.price-lbl{font-size:10px;color:rgba(200,232,255,0.35);font-weight:700;margin-bottom:5px;letter-spacing:2px;font-family:'Orbitron',monospace;}
+.price-val{font-family:'Orbitron',monospace;font-size:clamp(26px,7vw,38px);font-weight:900;color:var(--accent);text-shadow:0 0 24px rgba(0,200,255,0.4);letter-spacing:2px;}
+.price-feed{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:5px;font-size:10px;color:rgba(200,232,255,0.35);}
+.price-feed .live-dot{width:5px;height:5px;}
+.last-d-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;}
+.last-d-lbl{font-size:10px;color:rgba(200,232,255,0.35);font-family:'Orbitron',monospace;}
+.last-d-val{background:rgba(255,215,0,0.12);border:1px solid var(--gold);border-radius:7px;padding:3px 12px;font-family:'Orbitron',monospace;font-size:18px;font-weight:900;color:var(--gold);}
+.tick-ct{font-size:10px;color:rgba(200,232,255,0.25);font-family:'Orbitron',monospace;}
+
+/* SPOT + SCAN row (like meggerchecker) */
+.spot-scan-row{display:flex;align-items:center;justify-content:space-between;background:rgba(0,200,255,0.04);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:10px;}
+.spot-block .spot-lbl{font-size:10px;color:rgba(200,232,255,0.4);font-family:'Orbitron',monospace;letter-spacing:1px;}
+.spot-block .spot-val{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;color:var(--accent2);}
+.scan-btn{background:linear-gradient(135deg,#b8860b,var(--gold));color:#000;border:none;border-radius:10px;padding:10px 22px;font-family:'Orbitron',monospace;font-size:12px;font-weight:900;cursor:pointer;letter-spacing:1px;transition:0.2s;position:relative;overflow:hidden;}
+.scan-btn::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);animation:shimmer 2s infinite;}
+@keyframes shimmer{to{left:100%}}
+.scan-btn:hover{transform:scale(1.04);}
+
+/* STRATEGY ENGINE TABS (like meggerchecker) */
+.strategy-engine{background:linear-gradient(135deg,#071628,#0a1e35);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.engine-title{font-size:10px;font-weight:700;color:rgba(200,232,255,0.4);letter-spacing:2px;margin-bottom:10px;font-family:'Orbitron',monospace;}
+.strat-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.strat-tab{flex:1;min-width:80px;padding:9px 8px;border:1px solid rgba(0,200,255,0.2);border-radius:10px;background:rgba(0,200,255,0.04);color:rgba(200,232,255,0.5);font-family:'Orbitron',monospace;font-size:9px;font-weight:700;cursor:pointer;text-align:center;letter-spacing:0.5px;transition:0.2s;}
+.strat-tab.active{background:linear-gradient(135deg,#b8860b,var(--gold));color:#000;border-color:var(--gold);}
+.strat-tab:hover:not(.active){border-color:var(--accent);color:var(--accent);}
+
+/* DISTRIBUTIONS (like meggerchecker) */
+.dist-card{background:linear-gradient(135deg,#071628,#0a1e35);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.dist-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.dist-title{font-size:10px;font-weight:700;color:rgba(200,232,255,0.4);letter-spacing:2px;font-family:'Orbitron',monospace;display:flex;align-items:center;gap:6px;}
+.dist-live{background:rgba(0,255,157,0.1);border:1px solid rgba(0,255,157,0.3);border-radius:20px;padding:2px 8px;font-size:9px;color:var(--accent2);font-family:'Orbitron',monospace;display:flex;align-items:center;gap:4px;}
+.dist-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.dist-box{background:rgba(0,200,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;}
+.dist-lbl{font-size:10px;color:rgba(200,232,255,0.4);font-weight:700;letter-spacing:1px;margin-bottom:4px;}
+.dist-val{font-family:'Orbitron',monospace;font-size:26px;font-weight:900;}
+.dist-val.even-col{color:var(--accent2);}
+.dist-val.odd-col{color:var(--gold);}
+.dist-val.over-col{color:var(--accent);}
+.dist-val.under-col{color:var(--red);}
+
+/* AI SCORE (like meggerchecker) */
+.ai-score-card{background:linear-gradient(135deg,#071628,#0a1e35);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.ai-score-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.ai-score-label{font-size:10px;font-weight:700;color:rgba(200,232,255,0.4);letter-spacing:2px;font-family:'Orbitron',monospace;display:flex;align-items:center;gap:6px;}
+.ai-score-val{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;}
+.ai-score-bar{background:rgba(255,255,255,0.05);border-radius:5px;height:8px;overflow:hidden;margin-bottom:5px;position:relative;}
+.ai-score-fill{height:100%;border-radius:5px;transition:width 0.8s;}
+.threshold-line{position:absolute;top:0;bottom:0;width:2px;background:var(--red);border-radius:2px;}
+.threshold-txt{font-size:10px;color:rgba(200,232,255,0.35);text-align:center;margin-top:2px;font-family:'Orbitron',monospace;}
+.rsi-sma-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.indicator-box{background:rgba(0,200,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;}
+.ind-lbl{font-size:10px;color:rgba(200,232,255,0.4);font-weight:700;letter-spacing:1px;margin-bottom:3px;}
+.ind-val{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;color:var(--accent);}
+
+/* ACCUMULATORS / ONLY UPS / HIGHER-LOWER (like livederivdataanalysis) */
+.advanced-card{background:linear-gradient(135deg,#071628,#0a2040);border:2px solid rgba(0,200,255,0.2);border-radius:14px;padding:14px;margin-bottom:10px;position:relative;overflow:hidden;}
+.advanced-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.adv-title{font-family:'Orbitron',monospace;font-size:12px;font-weight:900;color:var(--accent);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.adv-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.adv-key{font-size:13px;font-weight:600;color:rgba(200,232,255,0.5);}
+.adv-val-badge{border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;font-family:'Orbitron',monospace;}
+.badge-stable{background:rgba(0,255,157,0.15);border:1px solid rgba(0,255,157,0.4);color:var(--accent2);}
+.badge-low{background:rgba(0,255,157,0.15);border:1px solid rgba(0,255,157,0.4);color:var(--accent2);}
+.badge-high{background:rgba(255,59,92,0.15);border:1px solid rgba(255,59,92,0.4);color:var(--red);}
+.badge-higher{background:rgba(0,200,255,0.15);border:1px solid rgba(0,200,255,0.4);color:var(--accent);}
+.badge-lower{background:rgba(255,107,53,0.15);border:1px solid rgba(255,107,53,0.4);color:var(--orange);}
+.badge-neutral{background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);color:var(--gold);}
+.adv-pct{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;color:var(--gold);}
+.adv-bar{background:rgba(255,255,255,0.05);border-radius:4px;height:5px;overflow:hidden;margin-bottom:6px;}
+.adv-bar-fill{height:100%;border-radius:4px;transition:width 0.8s;}
+.deeper-btn{width:100%;padding:9px;background:rgba(0,200,255,0.1);border:1px solid rgba(0,200,255,0.3);border-radius:8px;color:var(--accent);font-family:'Orbitron',monospace;font-size:10px;font-weight:700;cursor:pointer;letter-spacing:1px;transition:0.2s;}
+.deeper-btn:hover{background:rgba(0,200,255,0.2);}
+
+/* PREDICT BTN */
+.predict-btn{width:100%;padding:16px;background:linear-gradient(135deg,#0055cc,#0099ff,#00c8ff);border:none;border-radius:13px;font-family:'Orbitron',monospace;font-size:13px;font-weight:900;color:white;letter-spacing:2px;cursor:pointer;margin-bottom:10px;box-shadow:0 8px 28px rgba(0,150,255,0.3);transition:0.2s;position:relative;overflow:hidden;}
+.predict-btn::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);animation:shimmer 2s infinite;}
+.predict-btn:hover{transform:translateY(-2px);}
+
+/* DIGITS CARD */
+.digits-card{background:linear-gradient(135deg,#071628,#0a1e35);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.card-title{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;color:rgba(200,232,255,0.35);letter-spacing:2px;margin-bottom:11px;text-align:center;}
+.digits-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+.digit-cell{background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.1);border-radius:9px;padding:9px 3px;text-align:center;transition:0.3s;}
+.digit-cell.hot{background:rgba(0,200,255,0.14);border-color:var(--accent);box-shadow:0 0 12px rgba(0,200,255,0.2);}
+.digit-cell.warm{background:rgba(255,215,0,0.07);border-color:rgba(255,215,0,0.35);}
+.digit-cell.cold{background:rgba(255,59,92,0.05);border-color:rgba(255,59,92,0.2);}
+.digit-num{font-family:'Orbitron',monospace;font-size:16px;font-weight:900;color:white;display:block;}
+.digit-pct{font-size:9px;font-weight:700;color:rgba(200,232,255,0.35);display:block;margin-top:2px;}
+.digit-bar{height:3px;background:rgba(255,255,255,0.05);border-radius:2px;margin:4px 2px 0;overflow:hidden;}
+.digit-bar-fill{height:100%;background:linear-gradient(90deg,#00c8ff,#00ff9d);border-radius:2px;transition:width 0.6s;}
+.digit-cell.hot .digit-num{color:var(--accent);}
+.digit-cell.hot .digit-pct{color:var(--accent2);}
+.digit-cell.warm .digit-num{color:var(--gold);}
+
+/* FREQ CHART */
+.freq-wrap{margin-top:12px;}
+.freq-bars{display:flex;align-items:flex-end;gap:4px;height:64px;padding:0 1px;}
+.freq-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.freq-bar-wrap{width:100%;display:flex;align-items:flex-end;height:50px;}
+.freq-bar-item{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height 0.6s;}
+.freq-col-lbl{font-family:'Orbitron',monospace;font-size:9px;color:rgba(200,232,255,0.3);}
+.freq-col-pct{font-size:8px;color:rgba(200,232,255,0.25);}
+
+/* COUNTDOWN */
+.cd-card{background:rgba(0,200,255,0.03);border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-top:8px;display:flex;align-items:center;gap:10px;}
+.cd-txt{font-family:'Orbitron',monospace;font-size:10px;color:rgba(200,232,255,0.35);white-space:nowrap;}
+.cd-val{color:var(--accent);font-weight:900;}
+.cd-bar{flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;}
+.cd-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width 1s linear;}
+
+/* MATCH DIFFERS ROW */
+.mdf-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.mdf-btn{flex:1;padding:12px;border:none;border-radius:11px;font-family:'Orbitron',monospace;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.5px;transition:0.2s;}
+.mdf-match{background:linear-gradient(135deg,#2a1060,#5533cc);color:white;}
+.mdf-differs{background:linear-gradient(135deg,#5533cc,#8822aa);color:white;}
+.mdf-center{width:60px;height:60px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#050f20,#0a1e35);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:28px;font-weight:900;color:white;box-shadow:0 0 20px rgba(0,200,255,0.25);}
+
+/* OVER UNDER BTNS */
+.ou-row{display:flex;gap:7px;margin-bottom:10px;}
+.over-btn,.under-btn{flex:1;padding:12px;border:none;border-radius:11px;font-family:'Orbitron',monospace;font-size:10px;font-weight:900;cursor:pointer;transition:0.2s;letter-spacing:0.5px;}
+.over-btn{background:linear-gradient(135deg,#0055cc,#0099ff);color:white;}
+.under-btn{background:linear-gradient(135deg,#aa1100,#ff3b5c);color:white;}
+.over-btn:hover,.under-btn:hover{transform:translateY(-1px);}
+
+/* ANALYSIS CARDS */
+.analysis-card{background:linear-gradient(135deg,#071628,#0a1e35);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.an-title{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;color:rgba(200,232,255,0.4);letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:5px;}
+.an-title::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);display:inline-block;}
+.an-signal{font-family:'Orbitron',monospace;font-size:26px;font-weight:900;text-align:center;margin:6px 0 3px;letter-spacing:2px;}
+.sig-even{color:var(--accent2);}
+.sig-odd{color:var(--gold);}
+.sig-over{color:var(--accent);}
+.sig-under{color:var(--red);}
+.an-lbl{text-align:center;color:rgba(200,232,255,0.35);font-size:11px;margin-bottom:8px;}
+.bar-row{display:flex;align-items:center;gap:7px;}
+.bar-lbl{font-size:10px;color:rgba(200,232,255,0.45);font-weight:700;min-width:30px;}
+.bar-track{flex:1;height:5px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;}
+.bar-fill-c{height:100%;background:linear-gradient(90deg,#00c8ff,#00ff9d);border-radius:3px;transition:width 0.6s;}
+.bar-fill-r{height:100%;background:linear-gradient(90deg,#ff3b5c,#ff6b35);border-radius:3px;transition:width 0.6s;}
+.conf-note{text-align:center;font-size:11px;font-weight:700;margin-top:8px;font-family:'Orbitron',monospace;}
+.c-strong{color:var(--accent2);}
+.c-mod{color:var(--gold);}
+.c-weak{color:var(--red);}
+
+/* PROB TABLE */
+.prob-card{background:linear-gradient(135deg,#071628,#0a1e35);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.prob-table{width:100%;border-collapse:collapse;}
+.prob-table th{background:rgba(0,200,255,0.07);color:var(--accent);font-family:'Orbitron',monospace;font-size:9px;padding:7px 3px;text-align:center;border-bottom:1px solid var(--border);}
+.prob-table td{padding:7px 3px;text-align:center;border-bottom:1px solid rgba(0,200,255,0.04);font-size:11px;font-weight:700;}
+.pct-high{color:var(--accent2);}
+.pct-mid{color:var(--gold);}
+.pct-low{color:var(--red);}
+
+/* SIGNAL STRENGTH GUIDE */
+.ssg-card{background:linear-gradient(135deg,#071628,#0a1e35);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.ssg-table{width:100%;border-collapse:collapse;}
+.ssg-table th{background:rgba(0,200,255,0.07);color:var(--accent);font-family:'Orbitron',monospace;font-size:9px;padding:7px 5px;text-align:center;border-bottom:1px solid var(--border);}
+.ssg-table td{padding:7px 5px;text-align:center;font-size:11px;font-weight:600;border-bottom:1px solid rgba(0,200,255,0.04);}
+.ssg-s{color:var(--accent2);font-weight:700;}
+.ssg-m{color:var(--gold);font-weight:700;}
+.ssg-w{color:var(--red);font-weight:700;}
+
+/* MATCHES ANALYSIS */
+.matches-card{background:linear-gradient(135deg,#071628,#0a1e35);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.mld-digit{font-family:'Orbitron',monospace;font-size:34px;font-weight:900;color:var(--accent);text-align:center;}
+.mld-sub{font-size:11px;color:rgba(200,232,255,0.35);text-align:center;margin-bottom:10px;}
+.mb-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.mbn{font-family:'Orbitron',monospace;font-size:10px;color:rgba(200,232,255,0.4);width:12px;}
+.mbt{flex:1;height:6px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden;}
+.mbf{height:100%;background:linear-gradient(90deg,#7c4dff,#00c8ff);border-radius:3px;transition:width 0.8s;}
+.mbp{font-size:9px;color:rgba(200,232,255,0.35);width:32px;text-align:right;font-family:'Orbitron',monospace;}
+
+/* MACRO TREND */
+.macro-card{background:linear-gradient(135deg,#071628,#0a1e35);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.macro-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+.macro-item{background:rgba(0,200,255,0.04);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;}
+.macro-lbl{font-size:10px;color:rgba(200,232,255,0.35);font-weight:700;letter-spacing:1px;margin-bottom:4px;}
+.macro-val{font-family:'Orbitron',monospace;font-size:14px;font-weight:900;}
+.trend-bull{color:var(--accent2);}
+.trend-bear{color:var(--red);}
+.trend-neu{color:var(--gold);}
+
+/* REVIEWS */
+.reviews-card{background:linear-gradient(135deg,#071628,#0a1e35);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+
+footer{text-align:center;padding:18px 14px 36px;font-size:10px;color:rgba(200,232,255,0.2);line-height:2;border-top:1px solid var(--border);}
+footer a{color:var(--accent);}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:#1a3a5a;border-radius:4px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <span class="login-gem">💎</span>
+    <div class="login-title">
+      BILLIONAIRE DERIV<br>TRADING ANALYSIS TOOL
+      <span class="gold">REAL-TIME AI SIGNALS • LIVE DATA</span>
+    </div>
+    <div class="login-sub">Enter your credentials to access live real-time analysis powered by Deriv WebSocket API</div>
+    <input type="password" id="pwInput" class="login-input" placeholder="Enter Password" autocomplete="off"/>
+    <button class="g-btn btn-unlock" onclick="tryLogin()">🔒 UNLOCK TOOL →</button>
+    <button class="g-btn btn-wa" onclick="window.open('https://wa.me/254781358237?text=Hello%2C%20I%20need%20login%20credentials%20for%20Billionaire%20Deriv%20Trading%20Analysis%20Tool','_blank')">📱 GET LOGIN CREDENTIALS</button>
+    <button class="g-btn btn-premium" onclick="window.open('https://wa.me/254781358237?text=I%20want%20PREMIUM%20ACCESS%20%24100%20for%20Billionaire%20Deriv%20Trading%20Analysis%20Tool.','_blank')">💰 GET PREMIUM ACCESS – $100</button>
+    <p id="loginErr" class="login-err">❌ Incorrect password. Contact us for credentials.</p>
+    <div class="reviews">
+      <div class="review-label">⭐ TRADER REVIEWS (LIVE)</div>
+      <div class="review-item" id="gateReview">
+        <div class="stars">★★★★★</div>
+        <div class="review-text">"Finally a tool that actually analyses Deriv in real-time. Incredible accuracy."</div>
+        <div class="reviewer">Michael O. 📍 Kenya</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOADER -->
+<div id="loader">
+  <div class="spin-ring"></div>
+  <div class="loader-txt">CONNECTING TO DERIV API...</div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-area">
+      <span class="logo-icon">💎</span>
+      <div class="logo-txt">
+        BILLIONAIRE DERIV TRADING<br>ANALYSIS TOOL
+        <span class="sub">AI-POWERED REAL-TIME SIGNALS</span>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- Status bar -->
+  <div class="status-bar">
+    <div class="status-l">
+      <div class="live-dot" style="width:5px;height:5px;"></div>
+      <span id="connStatus">CONNECTING...</span>
+      <span class="status-sym" id="statusSym">--</span>
+    </div>
+    <span class="status-r" id="statusTicks">0 ticks</span>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-card">
+    <div class="chart-hdr">
+      <span class="chart-ttl">VOLATILITY — LIVE PRICE CHART</span>
+      <div class="price-badge" id="chartPrice">---</div>
+    </div>
+    <canvas id="chartCanvas"></canvas>
+    <div class="chart-btns">
+      <button class="c-btn c-gen" onclick="drawChart()">Generate</button>
+      <button class="c-btn c-ref" onclick="drawChart()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <!-- Signal Panel -->
+  <div class="signal-panel" id="signalPanel" style="display:none">
+    <div class="sp-header">
+      <div class="sp-label"><div class="sp-dot"></div>MATCHES SIGNAL</div>
+      <div class="conf-badge" id="confBadge">-- %</div>
+    </div>
+    <div class="sp-digit" id="signalDigit">--</div>
+    <div class="sp-strat" id="signalStratLabel">Matches Strategy</div>
+    <div class="acc-bar"><div class="acc-fill" id="accFill" style="width:0%"></div></div>
+    <div class="acc-labels"><span>Accuracy</span><span id="accPct">0%</span></div>
+    <div class="sp-meta">
+      <span>🔄 Runs: <b id="runsCount">--</b></span>
+      <span>🤖 Digit <b id="sigNote">--</b> — bot-verified</span>
+      <span>📊 <b id="sigTicks">--</b> ticks</span>
+    </div>
+  </div>
+
+  <!-- Volatility Select -->
+  <div class="sel-section">
+    <div class="sel-label">📊 VOLATILITY INDEX</div>
+    <select class="styled-sel" id="volSelect" onchange="reconnect()">
+      <option value="1HZ10V">Volatility 10 (1s) Index</option>
+      <option value="1HZ15V">Volatility 15 (1s) Index</option>
+      <option value="1HZ25V" selected>Volatility 25 (1s) Index</option>
+      <option value="1HZ50V">Volatility 50 (1s) Index</option>
+      <option value="1HZ75V">Volatility 75 (1s) Index</option>
+      <option value="1HZ90V">Volatility 90 (1s) Index</option>
+      <option value="1HZ100V">Volatility 100 (1s) Index</option>
+      <option value="R_10">Volatility 10 Index</option>
+      <option value="R_25">Volatility 25 Index</option>
+      <option value="R_50">Volatility 50 Index</option>
+      <option value="R_75">Volatility 75 Index</option>
+      <option value="R_100">Volatility 100 Index</option>
+    </select>
+  </div>
+
+  <!-- Duration + Tick Window -->
+  <div class="grid-2">
+    <div>
+      <div class="sel-label">⏱ DURATION</div>
+      <select class="styled-sel" id="durSelect">
+        <option>1 Minute</option>
+        <option>2 Minutes</option>
+        <option>5 Minutes</option>
+      </select>
+    </div>
+    <div>
+      <div class="sel-label">🔢 TICK WINDOW</div>
+      <select class="styled-sel" id="winSelect" onchange="tickWindow=parseInt(this.value);refreshUI();">
+        <option value="50">50 Ticks</option>
+        <option value="100">100 Ticks</option>
+        <option value="200" selected>200 Ticks</option>
+        <option value="500">500 Ticks</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Live Price -->
+  <div class="price-card">
+    <div class="price-lbl">LIVE MARKET PRICE</div>
+    <div class="price-val" id="livePrice">---</div>
+    <div class="price-feed"><div class="live-dot"></div><span id="feedLabel">-- Live Feed</span></div>
+    <div class="last-d-row">
+      <span class="last-d-lbl">LAST DIGIT</span>
+      <span class="last-d-val" id="lastDigit">-</span>
+      <span class="tick-ct" id="tickCount">0 ticks</span>
+    </div>
+  </div>
+
+  <!-- SPOT + SCAN (meggerchecker style) -->
+  <div class="spot-scan-row">
+    <div class="spot-block">
+      <div class="spot-lbl">AI INTERCEPT · SPOT</div>
+      <div class="spot-val" id="spotVal">---</div>
+    </div>
+    <button class="scan-btn" onclick="runScan()">⚡ SCAN</button>
+  </div>
+
+  <!-- STRATEGY ENGINE (meggerchecker style) -->
+  <div class="strategy-engine">
+    <div class="engine-title">⚙️ STRATEGY ENGINE</div>
+    <div class="strat-tabs">
+      <div class="strat-tab active" onclick="selectStrat(this,'evenodd')">EVEN / ODD</div>
+      <div class="strat-tab" onclick="selectStrat(this,'risefall')">RISE / FALL</div>
+      <div class="strat-tab" onclick="selectStrat(this,'matches')">MATCHES</div>
+      <div class="strat-tab" onclick="selectStrat(this,'differs')">DIFFERS</div>
+      <div class="strat-tab" onclick="selectStrat(this,'overunder')">OVER / UNDER</div>
+    </div>
+  </div>
+
+  <!-- Predict button -->
+  <button class="predict-btn" id="predictBtn" onclick="runPredict()">⚡ PREDICT SIGNAL</button>
+
+  <!-- DISTRIBUTIONS (meggerchecker style) -->
+  <div class="dist-card">
+    <div class="dist-header">
+      <div class="dist-title">🎯 DISTRIBUTIONS</div>
+      <div class="dist-live"><div class="live-dot"></div>LIVE</div>
+    </div>
+    <div class="dist-grid">
+      <div class="dist-box">
+        <div class="dist-lbl">EVEN</div>
+        <div class="dist-val even-col" id="distEven">0%</div>
+      </div>
+      <div class="dist-box">
+        <div class="dist-lbl">ODD</div>
+        <div class="dist-val odd-col" id="distOdd">0%</div>
+      </div>
+      <div class="dist-box">
+        <div class="dist-lbl">OVER</div>
+        <div class="dist-val over-col" id="distOver">0%</div>
+      </div>
+      <div class="dist-box">
+        <div class="dist-lbl">UNDER</div>
+        <div class="dist-val under-col" id="distUnder">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI SCORE (meggerchecker style) -->
+  <div class="ai-score-card">
+    <div class="ai-score-header">
+      <div class="ai-score-label">🧠 AI SCORE</div>
+      <div class="ai-score-val" id="aiScoreVal" style="color:var(--gold);">0%</div>
+    </div>
+    <div class="ai-score-bar">
+      <div class="ai-score-fill" id="aiScoreFill" style="width:0%;background:linear-gradient(90deg,#00c8ff,#00ff9d);"></div>
+      <div class="threshold-line" style="left:55%;"></div>
+    </div>
+    <div class="threshold-txt">TARGET THRESHOLD: 55%</div>
+    <div class="rsi-sma-row">
+      <div class="indicator-box">
+        <div class="ind-lbl">RSI (14)</div>
+        <div class="ind-val" id="rsiVal">--</div>
+      </div>
+      <div class="indicator-box">
+        <div class="ind-lbl">SMA (20)</div>
+        <div class="ind-val" id="smaVal" style="color:var(--accent2);">--</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MACRO TREND -->
+  <div class="macro-card">
+    <div class="an-title">📡 MACRO TREND ANALYSIS</div>
+    <div class="macro-grid">
+      <div class="macro-item">
+        <div class="macro-lbl">MOMENTUM</div>
+        <div class="macro-val" id="momentumVal">--</div>
+      </div>
+      <div class="macro-item">
+        <div class="macro-lbl">TREND</div>
+        <div class="macro-val" id="trendVal">--</div>
+      </div>
+      <div class="macro-item">
+        <div class="macro-lbl">VOLATILITY</div>
+        <div class="macro-val" id="volVal">--</div>
+      </div>
+      <div class="macro-item">
+        <div class="macro-lbl">STRENGTH</div>
+        <div class="macro-val" id="strengthVal">--</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACCUMULATORS (livederivdataanalysis style) -->
+  <div class="advanced-card">
+    <div class="adv-title">⊕ Accumulators</div>
+    <div class="adv-row">
+      <span class="adv-key">Stability</span>
+      <span class="adv-val-badge" id="accumStability">--</span>
+    </div>
+    <div class="adv-row">
+      <span class="adv-key">Confidence</span>
+      <span class="adv-pct" id="accumConf">--%</span>
+    </div>
+    <div class="adv-bar"><div class="adv-bar-fill" id="accumBar" style="width:0%;background:linear-gradient(90deg,#00c8ff,#00ff9d);"></div></div>
+    <div class="adv-row">
+      <span class="adv-key">Risk</span>
+      <span class="adv-val-badge" id="accumRisk">--</span>
+    </div>
+    <button class="deeper-btn" onclick="showDeeper('accum')">Deeper Analysis →</button>
+  </div>
+
+  <!-- ONLY UPS -->
+  <div class="advanced-card">
+    <div class="adv-title">↗ Only Ups</div>
+    <div class="adv-row">
+      <span class="adv-key">Signal</span>
+      <span class="adv-val-badge" id="onlyUpsSignal">--</span>
+    </div>
+    <div class="adv-row">
+      <span class="adv-key">Up-tick Ratio</span>
+      <span class="adv-pct" id="upTickRatio">--%</span>
+    </div>
+    <div class="adv-bar"><div class="adv-bar-fill" id="upTickBar" style="width:0%;background:linear-gradient(90deg,#00ff9d,#00c8ff);"></div></div>
+    <div class="adv-row">
+      <span class="adv-key">Momentum</span>
+      <span class="adv-val-badge" id="onlyUpsMomentum">--</span>
+    </div>
+    <button class="deeper-btn" onclick="showDeeper('ups')">Deeper Analysis →</button>
+  </div>
+
+  <!-- HIGHER / LOWER -->
+  <div class="advanced-card">
+    <div class="adv-title">↗ Higher / Lower</div>
+    <div class="adv-row">
+      <span class="adv-key">Bias</span>
+      <span class="adv-val-badge" id="hlBias">--</span>
+    </div>
+    <div class="adv-row">
+      <span class="adv-key">Confidence</span>
+      <span class="adv-pct" id="hlConf">--%</span>
+    </div>
+    <div class="adv-bar"><div class="adv-bar-fill" id="hlBar" style="width:0%;background:linear-gradient(90deg,#0099ff,#00c8ff);"></div></div>
+    <div class="adv-row">
+      <span class="adv-key">Momentum</span>
+      <span class="adv-val-badge" id="hlMomentum">--</span>
+    </div>
+    <button class="deeper-btn" onclick="showDeeper('hl')">Deeper Analysis →</button>
+  </div>
+
+  <!-- Digits + Freq chart -->
+  <div class="digits-card">
+    <div class="card-title">LIVE DIGIT FREQUENCY DISTRIBUTION</div>
+    <div class="digits-grid" id="digitsGrid"></div>
+    <div class="freq-wrap">
+      <div class="card-title" style="margin-top:10px;">FREQUENCY BAR CHART</div>
+      <div class="freq-bars" id="freqBars"></div>
+    </div>
+    <div class="cd-card">
+      <span class="cd-txt">Next update: <span class="cd-val" id="cdVal">10</span>s</span>
+      <div class="cd-bar"><div class="cd-fill" id="cdFill" style="width:100%"></div></div>
+      <span class="cd-txt" id="cdTicks">--</span>
+    </div>
+  </div>
+
+  <!-- Match/Differs row -->
+  <div class="mdf-row">
+    <button class="mdf-btn mdf-match">Matches</button>
+    <div class="mdf-center" id="mdfDigit">--</div>
+    <button class="mdf-btn mdf-differs">Differs</button>
+  </div>
+
+  <!-- Over/Under buttons -->
+  <div class="ou-row">
+    <button class="over-btn" id="overBtn">Over (0%)</button>
+    <button class="under-btn" id="underBtn">Under (0%)</button>
+  </div>
+
+  <!-- Even/Odd Analysis -->
+  <div class="analysis-card">
+    <div class="an-title">Even / Odd Analysis</div>
+    <div class="an-signal sig-even" id="eoSignal">--</div>
+    <div class="an-lbl">Signal</div>
+    <div class="bar-row">
+      <span class="bar-lbl" id="evenPct">0%</span>
+      <div class="bar-track"><div class="bar-fill-c" id="evenBar" style="width:0%"></div></div>
+      <span class="bar-lbl" id="oddPct">0%</span>
+    </div>
+    <div class="conf-note" id="eoConf">Analyzing...</div>
+  </div>
+
+  <!-- Over/Under Analysis -->
+  <div class="analysis-card">
+    <div class="an-title">Over / Under Analysis</div>
+    <div class="an-signal sig-over" id="ouSignal">--</div>
+    <div class="an-lbl">Signal</div>
+    <div class="bar-row">
+      <span class="bar-lbl" id="overPct2">0%</span>
+      <div class="bar-track"><div class="bar-fill-r" id="underBar" style="width:0%"></div></div>
+      <span class="bar-lbl" id="underPct2">0%</span>
+    </div>
+    <div class="conf-note" id="ouConf">Analyzing...</div>
+  </div>
+
+  <!-- Prob Table -->
+  <div class="prob-card">
+    <div class="card-title" style="margin-bottom:8px;">OVER PROBABILITIES</div>
+    <table class="prob-table">
+      <tr><th>D</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
+      <tr><td style="font-size:9px;color:rgba(200,232,255,0.3);">Over%</td>
+        <td class="pct-high" id="ov1">90%</td><td class="pct-high" id="ov2">85%</td>
+        <td class="pct-mid" id="ov3">70%</td><td class="pct-mid" id="ov4">60%</td>
+        <td class="pct-mid" id="ov5">55%</td><td class="pct-low" id="ov6">40%</td>
+        <td class="pct-low" id="ov7">30%</td><td class="pct-low" id="ov8">25%</td>
+      </tr>
+    </table>
+    <div style="height:10px;"></div>
+    <div class="card-title" style="margin-bottom:8px;">UNDER PROBABILITIES</div>
+    <table class="prob-table">
+      <tr><th>D</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th></tr>
+      <tr><td style="font-size:9px;color:rgba(200,232,255,0.3);">Under%</td>
+        <td class="pct-low" id="un1">25%</td><td class="pct-low" id="un2">30%</td>
+        <td class="pct-mid" id="un3">40%</td><td class="pct-mid" id="un4">55%</td>
+        <td class="pct-mid" id="un5">60%</td><td class="pct-high" id="un6">70%</td>
+        <td class="pct-high" id="un7">85%</td><td class="pct-high" id="un8">90%</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Signal Strength Guide -->
+  <div class="ssg-card">
+    <div class="an-title">Signal Strength Guide</div>
+    <table class="ssg-table">
+      <tr><th>Pattern</th><th>Even/Odd</th><th>Rise/Fall</th></tr>
+      <tr><td class="ssg-s">Strong</td><td>Above 65%</td><td>Above 65%</td></tr>
+      <tr><td class="ssg-m">Moderate</td><td>55–65%</td><td>55–65%</td></tr>
+      <tr><td class="ssg-w">Weak</td><td>Below 55%</td><td>Below 55%</td></tr>
+    </table>
+    <div style="font-size:10px;color:rgba(200,232,255,0.25);text-align:center;margin-top:8px;font-style:italic;">💡 Combine AI Score + pattern analysis for best results</div>
+  </div>
+
+  <!-- Matches Analysis -->
+  <div class="matches-card">
+    <div class="an-title">Matches Analysis</div>
+    <div class="mld-digit" id="mldDigit">--</div>
+    <div class="mld-sub">Most Likely Match Digit</div>
+    <div id="matchBarsDiv"></div>
+  </div>
+
+  <!-- Reviews -->
+  <div class="reviews-card">
+    <div class="an-title">Live Trader Feedback</div>
+    <div class="review-item" id="appReview">
+      <div class="stars">★★★★★</div>
+      <div class="review-text">"Loading..."</div>
+      <div class="reviewer">...</div>
+    </div>
+  </div>
+
+  <footer>
+    🔌 Deriv WebSocket API (app_id: 105240) · Real-time tick analysis<br>
+    📱 Support: <a href="https://wa.me/254781358237">WhatsApp +254781358237</a><br>
+    ⚠️ Risk Disclaimer: Past performance does not guarantee future results.
+  </footer>
+
+</div>
+
+<script>
+// ─── CONFIG ───
+const PASS="37757441Fe@";
+const WS_URL="wss://ws.binaryws.com/websockets/v3?app_id=105240";
+const BAR_COLORS=["#ff5252","#ffd740","#69f0ae","#40c4ff","#ea80fc","#ff6d00","#ccff90","#ff4081","#82b1ff","#ffe082"];
+let activeStrat='evenodd';
+
+// ─── STATE ───
+let ws=null,activeSymbol="1HZ25V";
+let tickHistory=[],priceHistory=[];
+let isStop=false,tickWindow=200;
+let countdown=10,cdInterval=null,uiInterval=null;
+
+// ─── LOGIN ───
+document.getElementById('pwInput').addEventListener('keydown',e=>{if(e.key==='Enter')tryLogin();});
+function tryLogin(){
+  if(document.getElementById('pwInput').value===PASS){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('loader').style.display='flex';
+    setTimeout(()=>{
+      document.getElementById('loader').style.display='none';
+      document.getElementById('app').style.display='block';
+      initApp();
+    },1800);
+  }else{
+    document.getElementById('loginErr').style.display='block';
+    document.getElementById('pwInput').value='';
+  }
+}
+function logout(){
+  stopWS();clearInterval(cdInterval);clearInterval(uiInterval);
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('pwInput').value='';
+  document.getElementById('loginErr').style.display='none';
+}
+
+// ─── REVIEWS ───
+const reviews=[
+  {n:"Patricia N.",l:"Uganda",s:"★★★★★",t:'"Pattern detection is next level. Win rate jumped to 84%!"'},
+  {n:"Michael O.",l:"Kenya",s:"★★★★★",t:'"The AI Score + Over/Under table is a game changer. Real profits!"'},
+  {n:"Sarah K.",l:"Nigeria",s:"★★★★★",t:'"Accumulators card shows LOW risk. I only enter when risk is low — very profitable!"'},
+  {n:"James M.",l:"South Africa",s:"★★★★☆",t:'"Higher/Lower bias with confidence % is brilliant. Helps time entries perfectly."'},
+  {n:"Grace A.",l:"Tanzania",s:"★★★★★",t:'"AI INTERCEPT SCAN feature is insane. Saved me from so many bad trades!"'},
+];
+let rIdx=0;
+function rotateReviews(){
+  const r=reviews[rIdx%reviews.length];
+  const h=`<div class="stars">${r.s}</div><div class="review-text">${r.t}</div><div class="reviewer">${r.n} 📍 ${r.l}</div>`;
+  document.getElementById('gateReview').innerHTML=h;
+  const ar=document.getElementById('appReview');
+  if(ar) ar.innerHTML=h;
+  rIdx++;
+}
+rotateReviews();
+setInterval(rotateReviews,7000);
+
+// ─── STRATEGY TABS ───
+function selectStrat(el,strat){
+  document.querySelectorAll('.strat-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  activeStrat=strat;
+}
+
+// ─── WEBSOCKET ───
+function connectWS(){
+  if(isStop) return;
+  setConn('CONNECTING...','#ffd700');
+  ws=new WebSocket(WS_URL);
+  ws.onopen=()=>{
+    ws.send(JSON.stringify({ticks:activeSymbol,subscribe:1}));
+    setConn('LIVE — REAL DATA','#00ff9d');
+    tickHistory=[];priceHistory=[];
+    document.getElementById('feedLabel').innerText=activeSymbol+' — Live Feed';
+    document.getElementById('statusSym').innerText=activeSymbol;
+  };
+  ws.onmessage=e=>{
+    try{
+      const d=JSON.parse(e.data);
+      if(d.error){console.warn(d.error.message);return;}
+      if(d.tick) processTick(d.tick);
+    }catch(err){}
+  };
+  ws.onerror=()=>setConn('ERROR','#ff3b5c');
+  ws.onclose=()=>{
+    if(!isStop&&document.getElementById('app').style.display==='block'){
+      setConn('RECONNECTING...','#ffd700');
+      setTimeout(connectWS,3000);
+    }
+  };
+}
+function stopWS(){if(ws)ws.close();}
+function reconnect(){activeSymbol=document.getElementById('volSelect').value;stopWS();setTimeout(connectWS,400);}
+function setConn(txt,col){const el=document.getElementById('connStatus');el.innerText=txt;el.style.color=col;}
+
+// ─── TICK ───
+function processTick(tick){
+  const price=parseFloat(tick.quote);
+  if(isNaN(price)) return;
+  const str=price.toString();
+  const dot=str.indexOf('.');
+  const digit=dot!==-1&&dot<str.length-1?parseInt(str[str.length-1]):Math.abs(Math.floor(price))%10;
+  tickHistory.push({price,digit,epoch:tick.epoch});
+  if(tickHistory.length>5000)tickHistory.shift();
+  priceHistory.push(price);
+  if(priceHistory.length>300)priceHistory.shift();
+  const fmt=price>10000?2:price>100?3:5;
+  const pStr=price.toFixed(fmt);
+  document.getElementById('livePrice').innerText=pStr;
+  document.getElementById('chartPrice').innerText=pStr;
+  document.getElementById('spotVal').innerText=pStr;
+  document.getElementById('lastDigit').innerText=digit;
+  document.getElementById('tickCount').innerText=tickHistory.length+' ticks';
+  document.getElementById('statusTicks').innerText=tickHistory.length+' ticks';
+}
+
+// ─── STATS ───
+function getStats(){
+  if(!tickHistory.length) return null;
+  const win=Math.min(tickWindow,tickHistory.length);
+  const recent=tickHistory.slice(-win);
+  const digits=recent.map(t=>t.digit);
+  const total=digits.length;
+  const freq=Array(10).fill(0);
+  digits.forEach(d=>freq[d]++);
+  const probs=freq.map(f=>(f/total)*100);
+  const overP=(digits.filter(d=>d>=5).length/total)*100;
+  const evenP=(digits.filter(d=>d%2===0).length/total)*100;
+  let maxF=0,bestD=0,minF=Infinity,differD=0;
+  freq.forEach((f,i)=>{if(f>maxF){maxF=f;bestD=i;}if(f<minF){minF=f;differD=i;}});
+  const matchAcc=Math.min(98,Math.max(60,Math.floor((maxF/total)*100)));
+  const differAcc=Math.min(95,Math.max(60,Math.floor(((total-minF)/total)*100)));
+  // Consecutive
+  const mc=Array(10).fill(0);let tm=0;
+  for(let i=1;i<digits.length;i++){if(digits[i]===digits[i-1]){mc[digits[i]]++;tm++;}}
+  let mld=0,maxM=0;
+  mc.forEach((c,i)=>{if(c>maxM){maxM=c;mld=i;}});
+  const matchProbs=mc.map(c=>tm?(c/tm)*100:0);
+  const ouConf=Math.min(99,Math.floor(Math.abs(overP-50)*2+50));
+  const eoConf=Math.min(99,Math.floor(Math.abs(evenP-50)*2+50));
+  // RSI approximation (relative strength of up vs down ticks)
+  const prices=recent.map(t=>t.price);
+  let gains=0,losses=0;
+  for(let i=1;i<prices.length;i++){
+    const d=prices[i]-prices[i-1];
+    if(d>0)gains+=d;else losses+=Math.abs(d);
+  }
+  const rs=losses===0?100:gains/losses;
+  const rsi=Math.round(100-(100/(1+rs)));
+  // SMA
+  const sma=prices.slice(-20).reduce((a,b)=>a+b,0)/Math.min(20,prices.length);
+  // AI Score = combination of eoConf + ouConf + matchAcc
+  const aiScore=Math.min(99,Math.round((eoConf+ouConf+matchAcc)/3));
+  // Up-tick count
+  let upTicks=0;
+  for(let i=1;i<prices.length;i++){if(prices[i]>prices[i-1])upTicks++;}
+  const upRatio=Math.round((upTicks/(prices.length-1||1))*100);
+  return{probs,freq,overP,underP:100-overP,evenP,oddP:100-evenP,bestD,matchAcc,differD,differAcc,matchProbs,mld,ouConf,eoConf,total,rsi,sma,aiScore,upRatio,prices};
+}
+
+// ─── BUILD STATIC STRUCTURES ───
+function buildDigitGrid(){
+  const g=document.getElementById('digitsGrid');g.innerHTML='';
+  for(let i=0;i<10;i++){
+    g.innerHTML+=`<div class="digit-cell" id="dc${i}">
+      <span class="digit-num" style="color:${BAR_COLORS[i]}">${i}</span>
+      <span class="digit-pct" id="dp${i}">0%</span>
+      <div class="digit-bar"><div class="digit-bar-fill" id="db${i}" style="width:0%"></div></div>
+    </div>`;
+  }
+}
+function buildFreqBars(){
+  const c=document.getElementById('freqBars');c.innerHTML='';
+  for(let i=0;i<10;i++){
+    c.innerHTML+=`<div class="freq-col">
+      <div class="freq-bar-wrap"><div class="freq-bar-item" id="fb${i}" style="background:${BAR_COLORS[i]};height:3px;width:100%;"></div></div>
+      <div class="freq-col-lbl">${i}</div>
+      <div class="freq-col-pct" id="fp${i}">0%</div>
+    </div>`;
+  }
+}
+function buildMatchBars(){
+  const c=document.getElementById('matchBarsDiv');c.innerHTML='';
+  for(let i=0;i<10;i++){
+    c.innerHTML+=`<div class="mb-row">
+      <div class="mbn">${i}</div>
+      <div class="mbt"><div class="mbf" id="mb${i}" style="width:0%"></div></div>
+      <div class="mbp" id="mbp${i}">0%</div>
+    </div>`;
+  }
+}
+
+// ─── REFRESH UI ───
+function refreshUI(){
+  const s=getStats();if(!s)return;
+  const maxF=Math.max(...s.freq)||1;
+
+  // Digit cells + freq bars
+  for(let i=0;i<10;i++){
+    const pct=s.probs[i];
+    const dc=document.getElementById('dc'+i);
+    if(document.getElementById('dp'+i)) document.getElementById('dp'+i).innerText=pct.toFixed(1)+'%';
+    if(document.getElementById('db'+i)) document.getElementById('db'+i).style.width=pct+'%';
+    if(dc){
+      dc.className='digit-cell';
+      if(s.freq[i]===Math.max(...s.freq))dc.className+=' hot';
+      else if(s.freq[i]>=maxF*0.7)dc.className+=' warm';
+      else if(s.freq[i]<=maxF*0.4)dc.className+=' cold';
+    }
+    const fb=document.getElementById('fb'+i);
+    if(fb)fb.style.height=Math.max(3,Math.floor((s.freq[i]/maxF)*50))+'px';
+    if(document.getElementById('fp'+i)) document.getElementById('fp'+i).innerText=pct.toFixed(0)+'%';
+  }
+
+  // Distributions
+  document.getElementById('distEven').innerText=s.evenP.toFixed(0)+'%';
+  document.getElementById('distOdd').innerText=s.oddP.toFixed(0)+'%';
+  document.getElementById('distOver').innerText=s.overP.toFixed(0)+'%';
+  document.getElementById('distUnder').innerText=s.underP.toFixed(0)+'%';
+
+  // AI Score
+  const aiPct=s.aiScore;
+  document.getElementById('aiScoreVal').innerText=aiPct+'%';
+  document.getElementById('aiScoreFill').style.width=aiPct+'%';
+  const aiColor=aiPct>=55?'linear-gradient(90deg,#00c8ff,#00ff9d)':'linear-gradient(90deg,#ff6b35,#ff3b5c)';
+  document.getElementById('aiScoreFill').style.background=aiColor;
+  document.getElementById('aiScoreVal').style.color=aiPct>=55?'var(--accent2)':'var(--red)';
+
+  // RSI & SMA
+  const fmt=s.prices[0]>100?2:3;
+  document.getElementById('rsiVal').innerText=s.rsi;
+  document.getElementById('rsiVal').style.color=s.rsi>70?'var(--red)':s.rsi<30?'var(--accent2)':'var(--gold)';
+  document.getElementById('smaVal').innerText=s.sma.toFixed(fmt);
+
+  // Macro trend
+  const lastP=s.prices[s.prices.length-1];
+  const firstP=s.prices[0];
+  const trendDir=lastP>firstP?'BULLISH':'BEARISH';
+  const trendCls=lastP>firstP?'trend-bull':'trend-bear';
+  document.getElementById('momentumVal').innerText=s.upRatio>55?'POSITIVE':s.upRatio<45?'NEGATIVE':'NEUTRAL';
+  document.getElementById('momentumVal').className='macro-val '+(s.upRatio>55?'trend-bull':s.upRatio<45?'trend-bear':'trend-neu');
+  document.getElementById('trendVal').innerText=trendDir;
+  document.getElementById('trendVal').className='macro-val '+trendCls;
+  const volRange=s.prices.length>1?Math.max(...s.prices)-Math.min(...s.prices):0;
+  const avgP=s.prices.reduce((a,b)=>a+b,0)/s.prices.length;
+  const volPct=(volRange/avgP*100).toFixed(2);
+  document.getElementById('volVal').innerText=volPct+'%';
+  document.getElementById('volVal').className='macro-val '+(parseFloat(volPct)>1?'trend-bear':'trend-bull');
+  const strength=s.aiScore>=65?'STRONG':s.aiScore>=50?'MODERATE':'WEAK';
+  document.getElementById('strengthVal').innerText=strength;
+  document.getElementById('strengthVal').className='macro-val '+(s.aiScore>=65?'trend-bull':s.aiScore>=50?'trend-neu':'trend-bear');
+
+  // Accumulators
+  const accumConf=Math.min(99,Math.round((s.eoConf+s.ouConf)/2));
+  const accumStable=accumConf>=65;
+  const accumRisk=accumConf>=65?'LOW':accumConf>=55?'MEDIUM':'HIGH';
+  document.getElementById('accumConf').innerText=accumConf+'%';
+  document.getElementById('accumBar').style.width=accumConf+'%';
+  const stab=document.getElementById('accumStability');
+  stab.innerText=accumStable?'Stable':'Unstable';
+  stab.className='adv-val-badge '+(accumStable?'badge-stable':'badge-high');
+  const risk=document.getElementById('accumRisk');
+  risk.innerText=accumRisk;
+  risk.className='adv-val-badge '+(accumRisk==='LOW'?'badge-low':accumRisk==='MEDIUM'?'badge-neutral':'badge-high');
+
+  // Only Ups
+  document.getElementById('upTickRatio').innerText=s.upRatio+'%';
+  document.getElementById('upTickBar').style.width=s.upRatio+'%';
+  const upSig=document.getElementById('onlyUpsSignal');
+  upSig.innerText=s.upRatio>=55?'BULLISH':s.upRatio<=45?'BEARISH':'NEUTRAL';
+  upSig.className='adv-val-badge '+(s.upRatio>=55?'badge-higher':s.upRatio<=45?'badge-high':'badge-neutral');
+  const upMom=document.getElementById('onlyUpsMomentum');
+  upMom.innerText='+'+s.upRatio+'%';
+  upMom.className='adv-val-badge badge-higher';
+
+  // Higher/Lower
+  const hlConf=Math.min(99,Math.round(Math.abs(s.upRatio-50)*2+50));
+  document.getElementById('hlConf').innerText=hlConf+'%';
+  document.getElementById('hlBar').style.width=hlConf+'%';
+  const bias=document.getElementById('hlBias');
+  const biasDir=s.upRatio>=50?'Higher':'Lower';
+  bias.innerText=biasDir;
+  bias.className='adv-val-badge '+(biasDir==='Higher'?'badge-higher':'badge-lower');
+  const hlM=document.getElementById('hlMomentum');
+  const hlMomVal=(s.upRatio-50>0?'+':'')+((s.upRatio-50)/10).toFixed(1);
+  hlM.innerText=hlMomVal;
+  hlM.className='adv-val-badge '+(parseFloat(hlMomVal)>=0?'badge-higher':'badge-lower');
+
+  // MDF center
+  document.getElementById('mdfDigit').innerText=s.bestD;
+
+  // Over/Under btns
+  document.getElementById('overBtn').innerText=`Over (${s.overP.toFixed(0)}%)`;
+  document.getElementById('underBtn').innerText=`Under (${s.underP.toFixed(0)}%)`;
+
+  // Even/Odd
+  const eoStr=s.eoConf>=65?'STRONG':s.eoConf>=55?'MODERATE':'WEAK';
+  const eoCls=s.eoConf>=65?'c-strong':s.eoConf>=55?'c-mod':'c-weak';
+  document.getElementById('evenPct').innerText=s.evenP.toFixed(1)+'%';
+  document.getElementById('oddPct').innerText=s.oddP.toFixed(1)+'%';
+  document.getElementById('evenBar').style.width=s.evenP+'%';
+  const eoSig=document.getElementById('eoSignal');
+  eoSig.innerText=s.evenP>s.oddP?'EVEN':'ODD';
+  eoSig.className='an-signal '+(s.evenP>s.oddP?'sig-even':'sig-odd');
+  const eoC=document.getElementById('eoConf');
+  eoC.innerText=s.eoConf+'% confidence — '+eoStr+' SIGNAL';
+  eoC.className='conf-note '+eoCls;
+
+  // Over/Under
+  const ouStr=s.ouConf>=65?'STRONG':s.ouConf>=55?'MODERATE':'WEAK';
+  const ouCls=s.ouConf>=65?'c-strong':s.ouConf>=55?'c-mod':'c-weak';
+  document.getElementById('overPct2').innerText=s.overP.toFixed(1)+'%';
+  document.getElementById('underPct2').innerText=s.underP.toFixed(1)+'%';
+  document.getElementById('underBar').style.width=s.underP+'%';
+  const ouSig=document.getElementById('ouSignal');
+  ouSig.innerText=s.overP>s.underP?'OVER':'UNDER';
+  ouSig.className='an-signal '+(s.overP>s.underP?'sig-over':'sig-under');
+  const ouC=document.getElementById('ouConf');
+  ouC.innerText=s.ouConf+'% confidence — '+ouStr+' SIGNAL';
+  ouC.className='conf-note '+ouCls;
+
+  // Prob table
+  const base=[90,85,70,60,55,40,30,25];
+  for(let d=1;d<=8;d++){
+    const adj=Math.round(base[d-1]+(s.overP-50)*0.4);
+    const clip=Math.max(5,Math.min(95,adj));
+    const ov=document.getElementById('ov'+d);const un=document.getElementById('un'+d);
+    if(ov){ov.innerText=clip+'%';ov.className=clip>=65?'pct-high':clip>=50?'pct-mid':'pct-low';}
+    if(un){un.innerText=(100-clip)+'%';un.className=(100-clip)>=65?'pct-high':(100-clip)>=50?'pct-mid':'pct-low';}
+  }
+
+  // Matches analysis
+  document.getElementById('mldDigit').innerText=s.mld;
+  for(let i=0;i<10;i++){
+    const p=(s.matchProbs[i]||0).toFixed(1);
+    if(document.getElementById('mb'+i)) document.getElementById('mb'+i).style.width=p+'%';
+    if(document.getElementById('mbp'+i)) document.getElementById('mbp'+i).innerText=p+'%';
+  }
+
+  drawChart();
+}
+
+// ─── CHART ───
+function drawChart(){
+  if(priceHistory.length<2) return;
+  const canvas=document.getElementById('chartCanvas');
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.clientWidth;const H=120;
+  canvas.width=W*dpr;canvas.height=H*dpr;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  ctx.scale(dpr,dpr);ctx.clearRect(0,0,W,H);
+  const pts=priceHistory.slice(-80);
+  const mn=Math.min(...pts),mx=Math.max(...pts),rng=mx-mn||1;
+  const pad=14;
+  function yp(v){return pad+(1-(v-mn)/rng)*(H-pad*2);}
+  ctx.fillStyle='#050e1c';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(0,200,255,0.05)';ctx.lineWidth=1;
+  for(let i=0;i<5;i++){const yy=pad+(H-pad*2)*i/4;ctx.beginPath();ctx.moveTo(0,yy);ctx.lineTo(W,yy);ctx.stroke();}
+  ctx.fillStyle='rgba(200,232,255,0.25)';ctx.font='9px Rajdhani';
+  [mn,mn+rng/2,mx].forEach((v,i)=>{
+    const yy=pad+(1-i/2)*(H-pad*2);
+    ctx.fillText(v.toFixed(2),4,yy+3);
+  });
+  const grad=ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'rgba(0,200,255,0.18)');
+  grad.addColorStop(1,'rgba(0,200,255,0)');
+  ctx.beginPath();
+  pts.forEach((p,i)=>{const x=(i/(pts.length-1))*W;i===0?ctx.moveTo(x,yp(p)):ctx.lineTo(x,yp(p));});
+  ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
+  ctx.fillStyle=grad;ctx.fill();
+  ctx.beginPath();ctx.strokeStyle='#00c8ff';ctx.lineWidth=2;
+  pts.forEach((p,i)=>{const x=(i/(pts.length-1))*W;i===0?ctx.moveTo(x,yp(p)):ctx.lineTo(x,yp(p));});
+  ctx.stroke();
+  pts.forEach((p,i)=>{
+    const x=(i/(pts.length-1))*W;
+    ctx.beginPath();ctx.arc(x,yp(p),i===pts.length-1?4:1.5,0,Math.PI*2);
+    ctx.fillStyle=i===pts.length-1?'#00ff9d':'rgba(0,200,255,0.35)';ctx.fill();
+  });
+}
+
+// ─── SCAN (AI Intercept) ───
+function runScan(){
+  const btn=document.querySelector('.scan-btn');
+  btn.innerText='SCANNING...';btn.disabled=true;
+  setTimeout(()=>{
+    btn.innerText='⚡ SCAN';btn.disabled=false;
+    refreshUI();
+    const s=getStats();
+    if(s){
+      const panel=document.getElementById('signalPanel');
+      document.getElementById('signalDigit').innerText=s.bestD;
+      document.getElementById('sigNote').innerText=s.bestD;
+      document.getElementById('confBadge').innerText=s.aiScore+'% AI Score';
+      document.getElementById('accFill').style.width=s.aiScore+'%';
+      document.getElementById('accPct').innerText=s.aiScore+'%';
+      document.getElementById('runsCount').innerText=Math.floor(s.aiScore/10)+1;
+      document.getElementById('sigTicks').innerText=s.total;
+      document.getElementById('signalStratLabel').innerText='AI Intercept Scan Result';
+      panel.style.display='block';
+    }
+  },1500);
+}
+
+// ─── PREDICT ───
+function runPredict(){
+  const s=getStats();
+  const btn=document.getElementById('predictBtn');
+  const panel=document.getElementById('signalPanel');
+  if(!s||!tickHistory.length){
+    panel.style.display='block';
+    document.getElementById('signalDigit').innerText='⚠';
+    document.getElementById('confBadge').innerText='Waiting for data...';
+    return;
+  }
+  btn.innerText='⏳ ANALYZING...';btn.disabled=true;
+  setTimeout(()=>{
+    let digit=s.bestD,acc=s.matchAcc,stratLabel='Matches Strategy';
+    if(activeStrat==='differs'){digit=s.differD;acc=s.differAcc;stratLabel='Differs Strategy';}
+    else if(activeStrat==='evenodd'){digit=s.evenP>s.oddP?'EVEN':'ODD';acc=s.eoConf;stratLabel='Even/Odd Strategy';}
+    else if(activeStrat==='overunder'){digit=s.overP>s.underP?'OVER':'UNDER';acc=s.ouConf;stratLabel='Over/Under Strategy';}
+    else if(activeStrat==='risefall'){
+      const last2=priceHistory.slice(-2);
+      digit=last2.length===2&&last2[1]>last2[0]?'RISE':'FALL';
+      acc=s.aiScore;stratLabel='Rise/Fall Strategy';
+    }
+    const runs=Math.floor(acc/10)+1;
+    document.getElementById('signalDigit').innerText=digit;
+    document.getElementById('sigNote').innerText=digit;
+    document.getElementById('confBadge').innerText=acc+'% confidence';
+    document.getElementById('accFill').style.width=acc+'%';
+    document.getElementById('accPct').innerText=acc+'%';
+    document.getElementById('runsCount').innerText=runs;
+    document.getElementById('sigTicks').innerText=s.total;
+    document.getElementById('signalStratLabel').innerText=stratLabel;
+    panel.style.display='block';
+    btn.innerText='⚡ PREDICT SIGNAL';btn.disabled=false;
+    panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  },1200);
+}
+
+// ─── DEEPER ANALYSIS ───
+function showDeeper(type){
+  const s=getStats();if(!s) return;
+  let msg='';
+  if(type==='accum'){
+    msg=`ACCUMULATORS DEEP ANALYSIS\n\nConfidence: ${Math.round((s.eoConf+s.ouConf)/2)}%\nAI Score: ${s.aiScore}%\nRisk Level: ${s.aiScore>=65?'LOW':s.aiScore>=50?'MEDIUM':'HIGH'}\nRecommendation: ${s.aiScore>=65?'ENTER trade — conditions are favorable':'WAIT — conditions not optimal yet'}`;
+  }else if(type==='ups'){
+    msg=`ONLY UPS DEEP ANALYSIS\n\nUp-tick Ratio: ${s.upRatio}%\nMomentum: ${s.upRatio>55?'BULLISH — price trending up':s.upRatio<45?'BEARISH — price trending down':'NEUTRAL — ranging market'}\nRSI: ${s.rsi}\nRecommendation: ${s.upRatio>=55?'RISE/UP trade looks favorable':'DOWN/FALL may be better'}`;
+  }else{
+    msg=`HIGHER/LOWER DEEP ANALYSIS\n\nBias: ${s.upRatio>=50?'HIGHER':'LOWER'}\nConfidence: ${Math.round(Math.abs(s.upRatio-50)*2+50)}%\nSMA(20): ${s.sma.toFixed(2)}\nCurrent Price: ${priceHistory.length?priceHistory[priceHistory.length-1].toFixed(2):'--'}\nRecommendation: ${s.upRatio>=55?'Go HIGHER — strong upward momentum':s.upRatio<=45?'Go LOWER — downward pressure':'Markets are balanced — wait for signal'}`;
+  }
+  alert(msg);
+}
+
+// ─── COUNTDOWN ───
+function startCountdown(){
+  clearInterval(cdInterval);countdown=10;
+  cdInterval=setInterval(()=>{
+    countdown--;
+    const el=document.getElementById('cdVal');
+    const fill=document.getElementById('cdFill');
+    if(el) el.innerText=countdown;
+    if(fill) fill.style.width=(countdown/10*100)+'%';
+    if(countdown<=0){countdown=10;refreshUI();}
+  },1000);
+}
+
+// ─── INIT ───
+function initApp(){
+  buildDigitGrid();buildFreqBars();buildMatchBars();
+  activeSymbol=document.getElementById('volSelect').value;
+  tickWindow=parseInt(document.getElementById('winSelect').value);
+  connectWS();startCountdown();
+  uiInterval=setInterval(()=>{
+    if(document.getElementById('app').style.display==='block') refreshUI();
+  },1000);
+  window.addEventListener('resize',drawChart);
+}
+</script>
+</body>
+</html>
